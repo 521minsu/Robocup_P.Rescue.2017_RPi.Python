@@ -3,4 +3,4 @@ This is a private repository that contains the backup files of the program used 
 
 This repository requires opencv 3.2.0 with python3 installed on RPi before running. 
 
-** I DO NOT give permission for usage in any form. **
+<b> ** I DO NOT give permission for usage in any form. ** </b>
