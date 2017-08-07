@@ -45,7 +45,7 @@ class MainControl(object):
         else:
             pass
     
-    def greenturn(self,turnerror,gy,by):
+    def greenturn(self,turnerror):
         # 100 - 110
         if turnerror < 0: # turn left
             dc(dc,0,0)
@@ -53,7 +53,7 @@ class MainControl(object):
             time.sleep(0.9)
             dc(dc,0,0)
             dc(dc,100,-100)
-            time.sleep(1)
+            time.sleep(0.85)
             dc(dc,0,0)
             dc(dc,-100,100)
             print("turned left")

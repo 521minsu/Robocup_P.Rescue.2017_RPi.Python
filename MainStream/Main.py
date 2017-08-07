@@ -113,6 +113,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
         
         # green dot where the middle line of the video feed is
+        cv2.circle(blur,(rx,ry),5,(255,255,0),-1)
         cv2.circle(blur,(gx,gy),5,(255,0,0),-1)
         cv2.circle(blur,(bx,by),5,(0,0,255),-1)
         cv2.circle(blur,(170,160),5,(0,255,0),-1)
@@ -121,9 +122,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if bx != 0:
             lineerror = bx - 170
             Mainloop.linetrace(Mainloop,lineerror)
-        if gx != 0:
-            turnerror = gx - 170
-            Mainloop.greenturn(Mainloop,turnerror,gy,by)
+        if gx != 0 and bx != 0:
+            turnerror = gx - bx
+            Mainloop.greenturn(Mainloop,turnerror)
         
         print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{}".format(lineerror,bx,by,gx,gy))
         
