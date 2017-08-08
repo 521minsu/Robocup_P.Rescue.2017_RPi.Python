@@ -35,11 +35,16 @@ rawCapture = PiRGBArray(camera, size=(320, 240))
 # allow the camera to warmup
 time.sleep(0.1)
 
+# Read images from the directory
+detection  = cv2.imread('detectTest.png',0)
+visionmask = cv2.imread('mask320.png',0)
 
 # capture frames from the camera
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
-        image = frame.array
-        Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+        # image from the Picam
+	image = frame.array
+        # images from the Picam with filters and effects
+	Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         blur = cv2.blur(image, (3,3))
         
         Min_BB,Min_BG,Min_BR = 0,0,0
@@ -58,7 +63,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Gmask = cv2.inRange(Gimage,Glower,Gupper)
         Bmask = cv2.inRange(image,Blower,Bupper)
         
-        visionmask=cv2.imread('mask320.png',0)
         res = cv2.bitwise_and(Bmask,Bmask,mask=visionmask)
         Gmask = cv2.bitwise_and(Gmask,Gmask,mask=visionmask)
 
