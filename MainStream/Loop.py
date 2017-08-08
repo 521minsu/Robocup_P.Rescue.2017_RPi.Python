@@ -7,12 +7,14 @@
 # ---------------------------------- #
 #  Author: Minsu Kim                 #
 #  Email : 521minsu@gmail.com        #
-#  Last Update: 28.07.17             #
+#  Last Update: 08.08.17             #
 ######################################
+
 import time
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
+import waterTowers as WT
 
 
 
@@ -69,6 +71,10 @@ class MainControl(object):
             print("turned right")
         else:
             pass # Maybe an error has occured during the run, ignoring the call... 
+    def watertower(self,usval):
+        if usval < 30:   # When there is an obstacle in 30cm range...
+            dc(dc,0,0)
+            WT.watertower()
     
     def rescuedetection(self,rx,ry):
         pass # add link to rescue program and program it there
