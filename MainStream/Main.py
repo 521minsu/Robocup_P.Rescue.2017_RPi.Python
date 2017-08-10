@@ -23,6 +23,10 @@ import Loop
 Mainloop = Loop.MainControl
 import ultraSonicReading as USR
 
+#######################################
+motor_ENABLE = True                   #
+#######################################
+
 bx,by,gx,gy,rx,ry = 0,0,0,0,0,0
 
 # initialize the camera and grab a reference to the raw camera capture
@@ -123,21 +127,21 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     cv2.circle(blur,(170,160),5,(0,255,0),-1)
     lineerror,turnerror = 1000,1000
     
-    if bx != 0:
+    if bx != 0 and motor_ENABLE == True:
         lineerror = bx - 170
         Mainloop.linetrace(Mainloop,lineerror)
-    if gx != 0 and bx != 0:
+    if gx != 0 and bx != 0 and motor_ENABLE == True:
         turnerror = gx - bx
         Mainloop.greenturn(Mainloop,turnerror)
-    ultraSonicVal = USR.value()
+    ultraSonicVal = USR.ultraSonic.value()
     Mainloop.watertower(Mainloop,ultraSonicVal)
     
     print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,ultraSonicVal))
     
     Mainloop.rescuedetection(Mainloop,rx,ry)
     
-    cv2.imshow("result",blur)
-    cv2.imshow("Gmask",Gmask)
+    #cv2.imshow("result",blur)
+    #cv2.imshow("Gmask",Gmask)
     
     
     key = cv2.waitKey(1) & 0xFF

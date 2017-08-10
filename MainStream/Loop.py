@@ -72,9 +72,10 @@ class MainControl(object):
         else:
             pass # Maybe an error has occured during the run, ignoring the call... 
     def watertower(self,usval):
-        if usval < 30:   # When there is an obstacle in 30cm range...
-            dc(dc,0,0)
-            WT.watertower()
+        if usval == int():
+            if usval < 30:   # When there is an obstacle in 30cm range...
+                dc(dc,0,0)
+                WT.watertower()
     
     def rescuedetection(self,rx,ry):
         pass # add link to rescue program and program it there

@@ -17,8 +17,6 @@ flann=cv2.FlannBasedMatcher(flannParam,{})
 
 trainImg=cv2.imread("TrainingData/TrainImg.jpeg",0)
 trainKP,trainDesc=detector.detectAndCompute(trainImg,None)
-trainKP1,trainDesc1=detector.detectAndCompute(trainImg,None)
-trainKP2,trainDesc2=detector.detectAndCompute(trainImg,None)
  
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
@@ -42,11 +40,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         image = cv2.cvtColor(curr_img,cv2.COLOR_BGR2GRAY)
 
         queryKP,queryDesc=detector.detectAndCompute(image,None)
-        queryKP1,queryDesc1=detector.detectAndCompute(image,None)
-        queryKP2,queryDesc2=detector.detectAndCompute(image,None)
         matches=flann.knnMatch(queryDesc,trainDesc,k=2)
-        matches1=flann.knnMatch(queryDesc1,trainDesc1,k=2)
-        matches2=flann.knnMatch(queryDesc2,trainDesc2,k=2)
         
         goodMatch=[]
         for m,n in matches:
@@ -56,8 +50,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             tp=[]
             qp=[]
             for m in goodMatch:
-                tp.append(trainKP1[m.trainIdx].pt)
-                qp.append(queryKP1[m.queryIdx].pt)
+                tp.append(trainKP[m.trainIdx].pt)
+                qp.append(queryKP[m.queryIdx].pt)
             
             tp,qp=np.float32((tp,qp))
             H,status=cv2.findHomography(tp,qp,cv2.RANSAC,3.0)
@@ -69,54 +63,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             cv2.imshow('result',image)
         else:
             print ("Not Enough match found- {}/{}".format(len(goodMatch),MIN_MATCH_COUNT))
-            cv2.imshow('result',image)
-            
-            
-        goodMatch1=[]
-        for m1,n1 in matches:
-            if(m1.distance<0.75*n1.distance):
-                goodMatch1.append(m)
-        if(len(goodMatch1)>MIN_MATCH_COUNT):
-            tp=[]
-            qp=[]
-            for m in goodMatch1:
-                tp.append(trainKP1[m.trainIdx].pt)
-                qp.append(queryKP1[m.queryIdx].pt)
-            
-            tp,qp=np.float32((tp,qp))
-            H,status=cv2.findHomography(tp,qp,cv2.RANSAC,3.0)
-            h,w=trainImg.shape
-            trainBorder1=np.float32([[[0,0],[0,h-1],[w-1,h-1],[w-1,0]]])
-            queryBorder1=cv2.perspectiveTransform(trainBorder1,H)
-            cv2.polylines(image,[np.int32(queryBorder1)],True,(0,255,0),5)
-            print("Image Detected")
-            cv2.imshow('result1',image)
-        else:
-            print ("Not Enough match found- {}/{}".format(len(goodMatch1),MIN_MATCH_COUNT))
-            cv2.imshow('result1',image)
-            
-        goodMatch2=[]
-        for m2,n2 in matches:
-            if(m2.distance<0.75*n2.distance):
-                goodMatch2.append(m2)
-        if(len(goodMatch2)>MIN_MATCH_COUNT):
-            tp=[]
-            qp=[]
-            for m2 in goodMatch2:
-                tp.append(trainKP2[m.trainIdx].pt)
-                qp.append(queryKP2[m.queryIdx].pt)
-            
-            tp,qp=np.float32((tp,qp))
-            H,status=cv2.findHomography(tp,qp,cv2.RANSAC,3.0)
-            h,w=trainImg.shape
-            trainBorder2=np.float32([[[0,0],[0,h-1],[w-1,h-1],[w-1,0]]])
-            queryBorder2=cv2.perspectiveTransform(trainBorder2,H)
-            cv2.polylines(image,[np.int32(queryBorder)],True,(0,255,0),5)
-            print("Image Detected")
-            cv2.imshow('result2',image)
-        else:
-            print ("Not Enough match found- {}/{}".format(len(goodMatch),MIN_MATCH_COUNT))
-            cv2.imshow('result2',image)
+            cv2.imshow('result',image)           
+        
         
         #cv2.imshow('thresh',thresh2)
         key = cv2.waitKey(1) & 0xFF

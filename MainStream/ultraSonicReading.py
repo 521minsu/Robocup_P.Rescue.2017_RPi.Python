@@ -20,17 +20,18 @@ echo = 13
 
 GPIO.setup(trig, GPIO.OUT)
 GPIO.setup(echo, GPIO.IN)
-    def value():
-        GPIO.output(trig, False)
-        GPIO.output(trig, True)
-        time.sleep(0.00001)
-        GPIO.output(trig, False)
-        while GPIO.input(echo) == 0 :
-            st = time.time()
-        while GPIO.input(echo) == 1 :
-            ft = time.time()
-        duration = ft - st
-        distance = duration * 17000
-        distance = round(distance, 2)
+class ultraSonic():
+  def value():
+    GPIO.output(trig, False)
+    GPIO.output(trig, True)
+    time.sleep(0.00001)
+    GPIO.output(trig, False)
+    while GPIO.input(echo) == 0 :
+      st = time.time()
+    while GPIO.input(echo) == 1 :
+      ft = time.time()
+    duration = ft - st
+    distance = duration * 17000
+    distance = round(distance, 2)
         
-        return distance
+    return distance
