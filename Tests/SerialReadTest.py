@@ -1,10 +1,12 @@
 import serial, time, struct
 
-ser = serial.Serial('/dev/ttyACM0',9600)
+ser = serial.Serial('/dev/ttyUSB1',9600)
 
 while True:
     while ser.inWaiting()==0:
         pass
+##    rawData = ser.readline()
+##    print(rawData)
     try:
         rawData  = ser.readline().strip()
         if rawData != b'':
@@ -14,7 +16,7 @@ while True:
     #    rawrData = struct.unpack("", rawData)
     #    sensorValue = (rawrData[0] << 8) | rawrData[1]
         
-            time.sleep(0.2)
+            #time.sleep(0.2)
         else:
             pass
     except:

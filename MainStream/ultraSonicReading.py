@@ -23,6 +23,7 @@ GPIO.setup(echo, GPIO.IN)
 class ultraSonic():
   def value():
     GPIO.output(trig, False)
+    time.sleep(0.1)
     GPIO.output(trig, True)
     time.sleep(0.00001)
     GPIO.output(trig, False)
