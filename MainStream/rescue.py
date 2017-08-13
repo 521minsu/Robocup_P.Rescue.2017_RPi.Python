@@ -50,7 +50,6 @@ time.sleep(0.1)
 
 def nothing(x):
     pass
-
 # capture frames from the camera
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
 	# grab the raw NumPy array representing the image, then initialize the timestamp

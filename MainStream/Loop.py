@@ -15,6 +15,8 @@ import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
 import waterTowers as WT
+import servo_motors as servo
+#import rescue
 
 
 
@@ -77,5 +79,10 @@ class MainControl(object):
                 dc(dc,0,0)
                 WT.watertower()
     
-    def rescuedetection(self,rx,ry):
+    def rescuedetection(self,rx,bx,dist):
+        if rx != 0 and bx == 0 and dist <= 65:
+            dc(dc,0,0)
+            servo.control.up()
+            time.sleep(10)
+            
         pass # add link to rescue program and program it there

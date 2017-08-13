@@ -21,16 +21,20 @@ import numpy as np
 #Loop and program related modules
 import Loop
 Mainloop = Loop.MainControl
-import ultraSonicReading as USR
+import SensorReading as SR
+
+#Keep the servo motor facing on the line when starting
+import servo_motors as servo
+servo.control.down()
 
 # Check these before running
 #######################################
-motor_ENABLE = False                  #
+motor_ENABLE = True                   #
 #######################################
-green_ENABLE = False                  #
+green_ENABLE = True                   #
 #######################################
 waterTower_ENABLE = False             #
-WTLimit = 1                           #
+WTLimit = 0                           #
 #######################################
 
 WTDone = 0
@@ -49,7 +53,7 @@ rawCapture = PiRGBArray(camera, size=(320, 240))
 time.sleep(0.1)
 
 # Read images from the directory
-visionmask = cv2.imread('/images/mask320.png',0)
+
 
 # capture frames from the camera
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -75,16 +79,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     Gmask = cv2.inRange(Gimage,Glower,Gupper)
     Bmask = cv2.inRange(image,Blower,Bupper)
     
-    res = cv2.bitwise_and(Bmask,Bmask,mask=visionmask)
-    Gmask = cv2.bitwise_and(Gmask,Gmask,mask=visionmask)
-    
     # find contours in the threshold image
     image, contours,hierarchy = cv2.findContours(Bmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-    Gimage, Gcontours,Ghierarchy = cv2.findContours(Gmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+    Gimage, GRcontours,GRhierarchy = cv2.findContours(Gmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+    
+    visionmask=cv2.imread('mask320.png',0)
+    res = cv2.bitwise_and(Bmask,Bmask,mask=visionmask)
+    Gres = cv2.bitwise_and(Gmask,Gmask,mask=visionmask)
     
     res, Rcontours,Rhierarchy = cv2.findContours(res,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-    Gres, GRcontours,GRhierarchy = cv2.findContours(Gmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-    
+    Gres, Gcontours,Ghierarchy = cv2.findContours(Gres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+        
     # finding contour with maximum area and store it as best_cnt - Black Area
     min_area = 0
     best_cnt = 1
@@ -114,9 +119,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     gx,gy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
     
     # finding contour with maximum area and store it as best_cnt - Rescue Area
-    min_area = 153300
+    min_area = 2000
     best_cnt = 1
-    for cnt in Gcontours:
+    for cnt in GRcontours:
             area = cv2.contourArea(cnt)
             if area > min_area:
                     min_area = area
@@ -141,19 +146,23 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     if gx != 0 and bx != 0 and motor_ENABLE == True and green_ENABLE == True:
         turnerror = gx - bx
         Mainloop.greenturn(Mainloop,turnerror)
-    if waterTower_ENABLE == True and WTDone <= WTLimit:
-        ultraSonicVal = USR.ultraSonic.value()
-        Mainloop.watertower(Mainloop,ultraSonicVal)
+    if waterTower_ENABLE == True and WTDone < WTLimit:
+        dist = SR.value('distance')
+        Mainloop.watertower(Mainloop,dist)
         WTDone += 1
-        print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,ultraSonicVal))
+        print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
+    elif WTDone >= WTLimit:
+        dist = SR.value('distance')
+        Mainloop.rescuedetection(Mainloop,rx,bx,dist)
     else:
-        ultrasVal = USR.ultraSonic.value()
-        print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t distance:{}cm".format(lineerror,bx,by,gx,gy,ultrasVal))
+        dist = SR.value('distance')
+        print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t distance:{}cm".format(lineerror,bx,by,gx,gy,dist))
     
-    cv2.imshow("result",blur)
-    cv2.imshow("Gmask",Gmask)
-    cv2.imshow("Gres",Gres)
-    
+    #cv2.imshow("result",blur)
+    #cv2.imshow("Gmask",Gmask)
+    #cv2.imshow("Gres",Gres)
+    #cv2.imshow("Bmask",Bmask)
+    #cv2.imshow("Bres",res)
     
     key = cv2.waitKey(1) & 0xFF
     
