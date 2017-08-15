@@ -14,28 +14,37 @@ import time
 
 servoPin = 22
 
-GPIO.setmode(GPIO.BOARD)
-GPIO.setup(servoPin,GPIO.OUT)
 
-servopwm = GPIO.PWM(servoPin,50)
 
-servopwm.start(1)
-time.sleep(0.5)
-servopwm.ChangeDutyCycle(5)
-time.sleep(0.5)
-        
-servopwm.stop()
+##servopwm.start(9)
+##time.sleep(0.5)
+##servopwm.ChangeDutyCycle(15)
+##time.sleep(0.5)
+##        
+##servopwm.stop()
+
 
         
 class control():
     def up():
-        servopwm.start(12)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(servoPin,GPIO.OUT)
+
+        servopwm = GPIO.PWM(servoPin,50)
+        servopwm.start(0)
+        servopwm.ChangeDutyCycle(9)
         time.sleep(0.5)
-        
         servopwm.stop()
 
     def down():
-        servopwm.start(12)
+        GPIO.setmode(GPIO.BOARD)
+        GPIO.setup(servoPin,GPIO.OUT)
+
+        servopwm = GPIO.PWM(servoPin,50)
+        servopwm.start(0)
+        servopwm.ChangeDutyCycle(15)
         time.sleep(0.5)
+        servopwm.stop()
         
+    def stop():
         servopwm.stop()

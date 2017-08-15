@@ -158,7 +158,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         dist = SR.value('distance')
         print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t distance:{}cm".format(lineerror,bx,by,gx,gy,dist))
     
-    #cv2.imshow("result",blur)
+    cv2.imshow("result",blur)
     #cv2.imshow("Gmask",Gmask)
     #cv2.imshow("Gres",Gres)
     #cv2.imshow("Bmask",Bmask)

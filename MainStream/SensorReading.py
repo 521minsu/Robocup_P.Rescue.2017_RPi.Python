@@ -33,3 +33,9 @@ def value(sensor):
         print("Passed an error")
         pass
     
+###########################
+# Debugging Purpose Only! #
+###########################
+##while True:
+##    val = value('distance')
+##    print(val)

@@ -17,18 +17,22 @@ import time
 GPIO.setmode(GPIO.BOARD)
 
 right_pwm_pin = 32 
-left_in1_pin = 7
-left_in2_pin = 11
+right_in1_pin = 7
+right_in2_pin = 11
 left_pwm_pin = 33
-right_in1_pin = 18
-right_in2_pin = 16
+left_in1_pin = 16
+left_in2_pin = 18
 
 lift_pwm_pin = 38
 lift_in1_pin = 37
 lift_in2_pin = 40
 catch_pwm_pin = 29
 catch_in1_pin = 26
-catch_in2_pin = 24                                                                                                       
+catch_in2_pin = 24
+
+camera_pwm_pin = 19
+camera_in1_pin = 23
+camera_in2_pin = 21
 
 
 GPIO.setup(left_in1_pin, GPIO.OUT)
@@ -44,6 +48,10 @@ GPIO.setup(lift_pwm_pin, GPIO.OUT)
 GPIO.setup(catch_in1_pin, GPIO.OUT)
 GPIO.setup(catch_in2_pin, GPIO.OUT)
 GPIO.setup(catch_pwm_pin, GPIO.OUT)
+
+GPIO.setup(camera_pwm_pin, GPIO.OUT)
+GPIO.setup(camera_in1_pin, GPIO.OUT)
+GPIO.setup(camera_in2_pin, GPIO.OUT)
 
 left_dmotor_p = GPIO.PWM(left_pwm_pin, 255)
 right_dmotor_p = GPIO.PWM(right_pwm_pin, 255)
@@ -100,6 +108,10 @@ class Motor(object):
             GPIO.output(lift_pwm_pin, False)
             
         if catch == 'release':
+            GPIO.output(catch_in1_pin, True)
+            GPIO.output(catch_in2_pin, False)
+            GPIO.output(catch_pwm_pin, True)
+            time.sleep(0.5)
             GPIO.output(catch_in1_pin, False)
             GPIO.output(catch_in2_pin, False)
             GPIO.output(catch_pwm_pin, False)
@@ -107,6 +119,20 @@ class Motor(object):
             GPIO.output(catch_in1_pin, False)
             GPIO.output(catch_in2_pin, True)
             GPIO.output(catch_pwm_pin, True)
+            
+    def cameracontrol(self,tilt):
+        if tilt == 'up':
+            GPIO.output(camera_in1_pin, True)
+            GPIO.output(camera_in2_pin, False)
+            GPIO.output(camera_pwm_pin, True)
+        elif tilt == 'down':
+            GPIO.output(camera_in1_pin, False)
+            GPIO.output(camera_in2_pin, True)
+            GPIO.output(camera_pwm_pin, True)
+        elif tilt == 'stop':
+            GPIO.output(camera_in1_pin, False)
+            GPIO.output(camera_in2_pin, False)
+            GPIO.output(camera_pwm_pin, False)
     
     
     def cleanup(self):
