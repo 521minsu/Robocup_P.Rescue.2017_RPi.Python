@@ -18,8 +18,6 @@ import waterTowers as WT
 import servo_motors as servo
 import rescue
 
-
-
 def __init__():
     pass
 
