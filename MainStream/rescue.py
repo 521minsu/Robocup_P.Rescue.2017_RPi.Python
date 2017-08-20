@@ -7,7 +7,7 @@
 # ------------------------------------ #
 #  Author: Minsu Kim                   #
 #  Email : 521minsu@gmail.com          #
-#  Last Update: 08.08.17               #
+#  Last Update: 20.08.17               #
 ########################################
 
 #Camera & Opencv related modules
@@ -18,6 +18,7 @@ import time
 import cv2
 import numpy as np
 
+
 #########################################
 MIN_MATCH_COUNT=3
 #########################################
@@ -26,7 +27,6 @@ MIN_MATCH_COUNT=3
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
-
 
 import SensorReading as SR
 
@@ -37,25 +37,36 @@ FLANN_INDEX_KDITREE=0
 flannParam=dict(algorithm=FLANN_INDEX_KDITREE,tree=5)
 flann=cv2.FlannBasedMatcher(flannParam,{})
 
-trainImg=cv2.imread("images/detectionTest.png",0)
+trainImg=cv2.imread("images/victim.png",0)
+#vision_mask = cv2.imread("images/
+
 trainKP,trainDesc=detector.detectAndCompute(trainImg,None)
 
 finished = False
-first = True
 
 def nothing(x):
     pass
     
     
 #####################################################################
-def start(curr_img):
-    if first == True:
-        startTime = round(time.time())
-        timePassed = 0
+def start():
+    # initialize the camera and grab a reference to the raw camera capture
+    camera = PiCamera()
+    camera.resolution = (256, 144)
+    camera.framerate = 50
+    camera.hflip = False
+    rawCapture = PiRGBArray(camera, size=(256, 144))
+ 
+    # allow the camera to warmup
+    time.sleep(0.1)
     
-        victimFound = 0
-        searchDir = 0
-    else:
+    startTime = round(time.time())
+    timePassed = 0
+    
+    victimFound = 0
+    searchDir = 0
+    
+    for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
         image = curr_img
 
         if finished == True:

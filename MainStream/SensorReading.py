@@ -1,6 +1,6 @@
 import serial, time, struct
 
-ser = serial.Serial('/dev/ttyUSB0',9600)
+ser = serial.Serial('/dev/ttyUSB1',9600)
 
 def value(sensor):
     while ser.inWaiting()==0:
@@ -36,6 +36,18 @@ def value(sensor):
 ###########################
 # Debugging Purpose Only! #
 ###########################
-##while True:
-##    val = value('distance')
-##    print(val)
+##if __name__ == "__main__":
+##    while True:
+##        while ser.inWaiting()==0:
+##            pass
+##        rawData  = ser.readline().strip()
+##        if rawData != b'':
+##            rawrData = rawData.decode()
+##            senVal = rawrData.split(",")
+##            proxVal = int(senVal[0])
+##            irVal = int(senVal[1])
+##            
+##            if irVal > 80:
+##                irVal = 80
+##        print(rawData)
+        #print("Raw:{} \t Dist:{} \t Prox:{}".format(rawData,irVal,senVal))
