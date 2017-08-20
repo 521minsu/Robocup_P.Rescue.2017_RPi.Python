@@ -26,13 +26,14 @@ import rescue
 Rescue = False
 
 import dc_motors
+dc = dc_motors.Motor.drivingcontrol
 cc = dc_motors.Motor.cameracontrol
 
 # Check these before running
 #######################################
-motor_ENABLE = True                   #
+motor_ENABLE = True                 #
 #######################################
-green_ENABLE = True                   #
+green_ENABLE = True                  #
 #######################################
 waterTower_ENABLE = False             #
 WTLimit = 0                           #
@@ -47,6 +48,8 @@ camera = PiCamera()
 camera.resolution = (320, 240)
 camera.framerate = 50
 camera.hflip = False
+
+cc(cc,'down')
 
 rawCapture = PiRGBArray(camera, size=(320, 240))
  
@@ -85,7 +88,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         image, contours,hierarchy = cv2.findContours(Bmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         Gimage, GRcontours,GRhierarchy = cv2.findContours(Gmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         
-        visionmask=cv2.imread('mask320.png',0)
+        visionmask=cv2.imread('mask_noside.png',0)
         res = cv2.bitwise_and(Bmask,Bmask,mask=visionmask)
         Gres = cv2.bitwise_and(Gmask,Gmask,mask=visionmask)
         
@@ -121,7 +124,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         gx,gy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
         
         # finding contour with maximum area and store it as best_cnt - Rescue Area
-        min_area = 2000
+        min_area = 5000
         best_cnt = 1
         for cnt in GRcontours:
                 area = cv2.contourArea(cnt)
@@ -157,8 +160,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             dist = SR.value('distance')
             if rx != 0 and bx == 0 and dist <= 65:
                 dc(dc,0,0)
+                print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
                 cc(cc,'up')
-                Rescue = True
+                rescue.start()
+                break
         else:
             dist = SR.value('distance')
             print("From Main.py ... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t distance:{}cm".format(lineerror,bx,by,gx,gy,dist))

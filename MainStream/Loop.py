@@ -15,7 +15,6 @@ import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
 import waterTowers as WT
-import servo_motors as servo
 import rescue
 
 def __init__():
@@ -24,7 +23,7 @@ def __init__():
 class MainControl(object):
     def linetrace(self,error):
         mSpeed = 100
-        Kp,Ki,Kd = 100,10,0    # 100,10,0
+        Kp,Ki,Kd = 120,10,0    # 100,10,0
         integral,derivative,lasterror = 0,0,0
         pidturn = 0
         if error != 9000:
@@ -33,7 +32,7 @@ class MainControl(object):
             pidturn = Kp*error + Ki*integral + Kd*derivative
             pidturn = pidturn/100
             lasterror = error
-            Lspeed,Rspeed = mSpeed-pidturn, mSpeed+pidturn
+            Lspeed,Rspeed = mSpeed+pidturn, mSpeed-pidturn
             if Lspeed > 100:
                 Lspeed = 100
             elif Lspeed < -100:
@@ -49,20 +48,20 @@ class MainControl(object):
     
     def greenturn(self,turnerror):
         # 100 - 110
-        if turnerror < 0: # turn left
+        if turnerror > 0: # turn left
             dc(dc,0,0)
             dc(dc,100,100)
-            time.sleep(0.9)
+            time.sleep(0.7)
             dc(dc,0,0)
             dc(dc,100,-100)
-            time.sleep(0.85)
+            time.sleep(0.95)
             dc(dc,0,0)
             dc(dc,-100,100)
             print("turned left")
-        elif turnerror > 0: # turn right
+        elif turnerror < 0: # turn right
             dc(dc,0,0)
             dc(dc,100,100)
-            time.sleep(0.9)
+            time.sleep(0.7)
             dc(dc,0,0)
             dc(dc,-100,100)
             time.sleep(0.85)
@@ -76,12 +75,5 @@ class MainControl(object):
             if usval < 30:   # When there is an obstacle in 30cm range...
                 dc(dc,0,0)
                 WT.watertower()
-    
-    def rescuedetection(self,rx,bx,dist):
-        if rx != 0 and bx == 0 and dist <= 65:
-            dc(dc,0,0)
-            servo.control.up()
-            #rescue.start()
-            time.sleep(10)
             
         pass # add link to rescue program and program it there

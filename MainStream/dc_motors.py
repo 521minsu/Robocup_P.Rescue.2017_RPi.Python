@@ -27,12 +27,12 @@ lift_pwm_pin = 38
 lift_in1_pin = 37
 lift_in2_pin = 40
 catch_pwm_pin = 29
-catch_in1_pin = 26
-catch_in2_pin = 24
+catch_in1_pin = 24
+catch_in2_pin = 26
 
 camera_pwm_pin = 19
-camera_in1_pin = 23
-camera_in2_pin = 21
+camera_in1_pin = 21
+camera_in2_pin = 23
 
 
 GPIO.setup(left_in1_pin, GPIO.OUT)
