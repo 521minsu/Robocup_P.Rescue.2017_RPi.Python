@@ -184,5 +184,5 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           break
         
 if Rescue == True:
-    time.sleep(3)
+    time.sleep(1)
     rescue.start()
