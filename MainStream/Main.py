@@ -10,6 +10,10 @@
 #  Last Update: 08.08.17             #
 ######################################
 
+##############################################
+# !!!!!!! DO NOT FORGET TO CALIBRATE !!!!!!! #
+##############################################
+
 #Camera & Opencv related modules
 from picamera.array import PiRGBArray
 from picamera import PiCamera
@@ -21,25 +25,9 @@ import numpy as np
 #Loop and program related modules
 from Loop import MainControl as Mainloop
 import SensorReading as SR
-
-#import rescue
+import rescue
 Rescue = False
-
-## Enabling SIFT module
-detector=cv2.xfeatures2d.SIFT_create()
-
-FLANN_INDEX_KDITREE=0
-flannParam=dict(algorithm=FLANN_INDEX_KDITREE,tree=5)
-flann=cv2.FlannBasedMatcher(flannParam,{})
-
-trainImg=cv2.imread("images/victim.jpg",0)
-
-trainKP,trainDesc=detector.detectAndCompute(trainImg,None)
-
 finished = False
-
-def nothing(x):
-    pass
 
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
@@ -55,9 +43,6 @@ green_ENABLE = True                   #
 waterTower_ENABLE = False             #
 WTLimit = 0                           #
 #######################################
-MIN_MATCH_COUNT=10                    #
-#######################################
-
 WTDone = 0
 
 bx,by,gx,gy,rx,ry = 0,0,0,0,0,0
@@ -74,74 +59,6 @@ rawCapture = PiRGBArray(camera, size=(320, 240))
  
 # allow the camera to warmup
 time.sleep(1)
-
-
-def catchVictim():
-    dist = SR.value('distance')
-    # Catches the victim after finding it
-    while dist > 7:
-        dc(dc,100,100)
-    # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
-    dc(dc,100,100)
-    time.sleep(0.5)
-    # Controls the lifting mechanism in order to catch and lift the victim up
-    dc(dc,0,0)
-    lc(lc,'idle','catch')
-    time.sleep(0.5)
-    lc(lc,'lift','catch')
-    time.sleep(0.5)
-    # Calls the searchPlatform function and searches for the platform
-    searchPlatform()
-
-
-def searchPlatform():
-    dist = SR.value('distance')
-    startTime = round(time.time())
-    searchDir = 0
-    
-    while dist > 25:
-        dist = SR.value('distance')
-        
-        curTime = round(time.time())
-        TimePassed = curTime - startTime
-        
-        if TimePassed >= 2:
-            if searchDir == 0:
-                searchDir = 1
-            elif searchDir == 1:
-                searchDir = 0
-            
-            startTime = round(time.time())
-        
-        if searchDir == 0:
-            dc(dc,-50,50)
-        elif searchDir == 1:
-            dc(dc,50,-50)
-    
-    dc(dc,0,0)
-    print("Platform Found... Entering the Final Phrase...")
-    placeAndFinish()
-    
-def placeAndFinish():
-    dist = SR.value('distance')
-    
-    while dist > 10:
-        dc(dc,100,100)
-    dc(dc,100,100)
-    time.sleep(0.5)
-    dc(dc,0,0)
-    
-    lc(lc,'idle','release')
-    
-    dc(dc,-100,-100)
-    time.sleep(2)
-    dc(dc,0,0)
-    finished = True
-    
-    
-class Finished(Exception):
-    '''The program has reached its end'''
-
 
 # capture frames from the camera
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
@@ -267,66 +184,72 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           rawCapture.truncate(0)
       
       elif Rescue == True:
-            image = frame.array
-            Rimage = image
-            
-##            rescue_visionmask = cv2.imread("images/object_detectionmask.png")
-##            resmasked = cv2.bitwise_and(Rimage,Rimage,mask=rescue_visionmask)
-            if finished == True:
-                raise Finished
+          # image from the Picam
+          image = frame.array
+          # images from the Picam with filters and effects
+          Rimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
+          blur = cv2.blur(image, (3,3))
+          
+          Min_GH,Min_GS,Min_GV = 24,0,38         #Please put in the calibrated values
+          Max_GH,Max_GS,Max_GV = 85,255,255
+          
+          #Please Run Calibration.py first, and bring back the values according to the current situation
+          Glower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
+          Gupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
+          
+          Gmask = cv2.inRange(Gimage,Glower,Gupper)
+          
+          resvisionmask=cv2.imread('rescue_mask.png',0)
+          Gres = cv2.bitwise_and(Gmask,Gmask,mask=resvisionmask)
+          
+          Gres, Gcontours,Ghierarchy = cv2.findContours(Gres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+          
+          # finding contour with maximum area and store it as best_cnt - Rescue Area
+          min_area = 500
+          best_cnt = 1
+          for cnt in Gcontours:
+                  area = cv2.contourArea(cnt)
+                  if area > min_area:
+                          min_area = area
+                          best_cnt = cnt
+          
+          # finding centroids of best_cnt and draw a circle there
+          M = cv2.moments(best_cnt)
+          # rx, ry = Pink dot when Rescue has been reached.
+          rx,ry = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+          
+          # green dot where the middle line of the video feed is
+          cv2.circle(blur,(rx,ry),5,(255,255,0),-1)
+          cv2.circle(blur,(60,160),5,(0,255,0),-1)
+          
+          dist = SR.value('distance')
+          if dist < 40 && rx == 0 && ry == 0:
+              rescue.catchVictim()
+          
+          cv2.imshow("result",blur)
+          
+          key = cv2.waitKey(1) & 0xFF
+          
+          # clear the stream in preparation for the next frame
+          rawCapture.truncate(0)
 
-            queryKP,queryDesc=detector.detectAndCompute(image,None)
-            matches=flann.knnMatch(queryDesc,trainDesc,k=2)
+          curTime = round(time.time())
+          timePassed = curTime - startTime
 
-            goodMatch=[]
-            for m,n in matches:
-               if(m.distance<0.75*n.distance):
-                   goodMatch.append(m)
-            if(len(goodMatch)>MIN_MATCH_COUNT):
-               tp=[]
-               qp=[]
-               for m in goodMatch:
-                   tp.append(trainKP[m.trainIdx].pt)
-                   qp.append(queryKP[m.queryIdx].pt)
-               
-               tp,qp=np.float32((tp,qp))
-               H,status=cv2.findHomography(tp,qp,cv2.RANSAC,3.0)
-               h,w=trainImg.shape
-               print("Image Detected... entering catchVictim Process")
-               dc(dc,0,0)
-               catchVictim()
-               cv2.imshow('result',image)
-            else:
-               print ("Not Enough match found- {}/{}".format(len(goodMatch),MIN_MATCH_COUNT))
-               cv2.imshow('result',image)           
+          if timePassed >= 2:
+              if searchDir == 0: # Converting from Left to Right
+                  searchDir = 1
+              elif searchDir == 1: # Converting from RIght to Left
+                  searchDir = 0
+              startTime = round(time.time())
 
+          if searchDir == 0:
+              dc(dc,-75,75)
+          elif searchDir == 1:
+              dc(dc,75,-75)
 
-            #cv2.imshow('thresh',thresh2)
-            key = cv2.waitKey(1) & 0xFF
-
-            # clear the stream in preparation for the next frame
-            rawCapture.truncate(0)
-
-            curTime = round(time.time())
-            timePassed = curTime - startTime
-
-            if timePassed == 2:
-               if searchDir == 0: # Converting from Left to Right
-                   searchDir = 1
-               elif searchDir == 1: # Converting from RIght to Left
-                   searchDir = 0
-               startTime = round(time.time())
-
-            if searchDir == 0:
-               dc(dc,-75,75)
-            elif searchDir == 1:
-               dc(dc,75,-75)
-
-            # if the `q` key was pressed, break from the loop
-            if key == ord("q"):
-               cv2.destroyAllWindows()
-
-
-
+          # if the `q` key was pressed, break from the loop
+          if key == ord("q"):
+              cv2.destroyAllWindows()
+              break
       
-                
