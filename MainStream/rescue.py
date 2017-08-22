@@ -37,7 +37,7 @@ FLANN_INDEX_KDITREE=0
 flannParam=dict(algorithm=FLANN_INDEX_KDITREE,tree=5)
 flann=cv2.FlannBasedMatcher(flannParam,{})
 
-trainImg=cv2.imread("images/victim.png",0)
+trainImg=cv2.imread("images/victim.jpg",0)
 #vision_mask = cv2.imread("images/
 
 trainKP,trainDesc=detector.detectAndCompute(trainImg,None)

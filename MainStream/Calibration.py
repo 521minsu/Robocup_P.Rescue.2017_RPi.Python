@@ -34,6 +34,7 @@ def nothing(x):
 
 # create Window called 'setting' to call in order to add trackbars
 cv2.namedWindow('setting')
+cv2.namedWindow('customDotSetup')
 
 # adding trackbars to the window called 'setting'
 cv2.createTrackbar('Min BR','setting',0,255,nothing)
@@ -49,6 +50,9 @@ cv2.createTrackbar('Min GV','setting',0,255,nothing)
 cv2.createTrackbar('Max GH','setting',0,255,nothing)
 cv2.createTrackbar('Max GS','setting',0,255,nothing)
 cv2.createTrackbar('Max GV','setting',0,255,nothing)
+
+cv2.createTrackbar('X: Custom Dot','customDotSetup',0,320,nothing)
+cv2.createTrackbar('Y: Custom Dot','customDotSetup',0,240,nothing)
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
         image = frame.array
@@ -68,6 +72,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Max_GH = cv2.getTrackbarPos('Max GH','setting')
         Max_GS = cv2.getTrackbarPos('Max GS','setting')
         Max_GV = cv2.getTrackbarPos('Max GV','setting')
+        
+        CDX = cv2.getTrackbarPos('X: Custom Dot','customDotSetup')
+        CDY = cv2.getTrackbarPos('Y: Custom Dot','customDotSetup')
         
         #For Black, start with Min(0,0,0) Max(255,0,255), when calibrating
         Blower = np.array([Min_BR,Min_BG,Min_BB],dtype="uint8")
@@ -137,10 +144,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
         # green dot where the middle line of the video feed is
         cv2.circle(blur,(170,160),10,(0,255,0),-1)
+        cv2.circle(blur,(CDX,CDY),5,(255,255,255),-1)
         print("x:{} y:{}".format(cx,cy))
         
         # show the frame
-        cv2.imshow("setting",image) 
+        cv2.imshow("setting",image)
+        cv2.imshow("customDotSetup",blur)
         cv2.imshow("Frame", blur)
         cv2.imshow("GreenMask",Gimage)
         cv2.imshow("BlackMask",image)
