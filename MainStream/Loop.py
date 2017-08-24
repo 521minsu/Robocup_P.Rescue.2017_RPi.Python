@@ -15,6 +15,7 @@ import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
 import waterTowers as WT
+import SensorReading as SR
 import rescue
 
 def __init__():
@@ -41,7 +42,8 @@ class MainControl(object):
                 Rspeed = 100
             elif Rspeed < -100:
                 Rspeed = -100
-            print("Left:{} \t Right:{} \t error:{} \t lasterror:{} \t integral:{} \t derivative:{} \t pidturn:{}".format(Lspeed,Rspeed,error,lasterror,integral,derivative,pidturn))
+            #dist = SR.value('distance')
+            print("Left:{} \t Right:{} \t error:{} \t lasterror:{} \t integral:{} \t derivative:{} \t pidturn:{} ".format(Lspeed,Rspeed,error,lasterror,integral,derivative,pidturn,))
             dc(dc,Lspeed,Rspeed)
         else:
             pass

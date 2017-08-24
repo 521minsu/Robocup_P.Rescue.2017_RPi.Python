@@ -7,10 +7,9 @@
 # ------------------------------------ #
 #  Author: Minsu Kim                   #
 #  Email : 521minsu@gmail.com          #
-#  Last Update: 20.08.17               #
+#  Last Update: 22.08.17               #
 ########################################
 
-#Camera & Opencv related modules
 import time
 
 # motor related module
@@ -22,9 +21,9 @@ import SensorReading as SR
     
 #####################################################################
 def catchVictim():
-    dist = SR.value('distance')
+    dist = 80 # Minimise the number of SR call
     # Catches the victim after finding it
-    while dist > 10:
+    while dist > 9:
         dc(dc,100,100)
         dist = SR.value('distance')
     # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
@@ -37,11 +36,11 @@ def catchVictim():
     lc(lc,'lift','catch')
     time.sleep(0.5)
     # Calls the searchPlatform function and searches for the platform
-    searchPlatform()
+    searchPlatform(dist)
 
 
-def searchPlatform():
-    dist = SR.value('distance')
+def searchPlatform(distance):
+    dist = distance
     startTime = round(time.time())
     searchDir = 0
     
@@ -65,10 +64,10 @@ def searchPlatform():
     
     dc(dc,0,0)
     print("Platform Found... Entering the Final Phrase...")
-    placeAndFinish()
+    placeAndFinish(dist)
     
-def placeAndFinish():
-    dist = SR.value('distance')
+def placeAndFinish(distance):
+    dist = distance
     # Go straight until IR sensor returns 8cm or less
     while dist > 8:
         dc(dc,100,100)
