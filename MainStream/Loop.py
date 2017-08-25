@@ -14,7 +14,6 @@ import time
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
-import waterTowers as WT
 import SensorReading as SR
 import rescue
 
@@ -76,6 +75,9 @@ class MainControl(object):
         if usval == int():
             if usval < 30:   # When there is an obstacle in 30cm range...
                 dc(dc,0,0)
-                WT.watertower()
-            
-        pass # add link to rescue program and program it there
+                dc(dc,100,-100)
+                time.sleep(0.5)
+                dc(dc,100,100)
+                time.sleep(0.2)
+                dc(dc,30,100)
+                time.sleep(2)
