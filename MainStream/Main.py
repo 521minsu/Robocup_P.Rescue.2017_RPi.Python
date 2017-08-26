@@ -65,11 +65,9 @@ time.sleep(1)
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
       # Needs everywhere but unknown error occurs when called multiple times
       dist = SR.value('distance')
-      try:
-          dist = int(dist)
-      except TypeError:
-          dist = 800
-      print("RAW:{}".format(dist))
+      image = frame.array      
+      cv2.imshow("Frame",image)
+      print(dist)
       
       key = cv2.waitKey(1) & 0xFF
           
