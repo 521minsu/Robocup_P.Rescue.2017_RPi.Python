@@ -87,5 +87,4 @@ def placeAndFinish(distance):
     
     
 def finish():
-    if finished == True:
-        dc_motors.Motor.cleanup()
+    dc_motors.Motor.cleanup(dc_motors)

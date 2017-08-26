@@ -55,6 +55,7 @@ cv2.createTrackbar('Min V','Green Cal',0,255,nothing)
 cv2.createTrackbar('Max H','Green Cal',0,255,nothing)
 cv2.createTrackbar('Max S','Green Cal',0,255,nothing)
 cv2.createTrackbar('Max V','Green Cal',0,255,nothing)
+cv2.createTrackbar('Min Area','Green Cal',0,5000,nothing)
 
 cv2.createTrackbar('Min H','Orange Cal',0,255,nothing)
 cv2.createTrackbar('Min S','Orange Cal',0,255,nothing)
@@ -62,7 +63,7 @@ cv2.createTrackbar('Min V','Orange Cal',0,255,nothing)
 cv2.createTrackbar('Max H','Orange Cal',0,255,nothing)
 cv2.createTrackbar('Max S','Orange Cal',0,255,nothing)
 cv2.createTrackbar('Max V','Orange Cal',0,255,nothing)
-cv2.createTrackbar('Min Area','Orange Cal',0,255,nothing)
+cv2.createTrackbar('Min Area','Orange Cal',0,5000,nothing)
 
 cv2.createTrackbar('X: Custom Dot','customDotSetup',0,320,nothing)
 cv2.createTrackbar('Y: Custom Dot','customDotSetup',0,240,nothing)
@@ -96,6 +97,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Max_GH = cv2.getTrackbarPos('Max H','Green Cal')
         Max_GS = cv2.getTrackbarPos('Max S','Green Cal')
         Max_GV = cv2.getTrackbarPos('Max V','Green Cal')
+        Min_GA = cv2.getTrackbarPos('Min Area','Green Cal')
         
         Min_OH = cv2.getTrackbarPos('Min H','Orange Cal')
         Min_OS = cv2.getTrackbarPos('Min S','Orange Cal')
@@ -157,7 +159,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
         
         # finding contour with maximum area and store it as best_cnt - Green Patch (Mask Applied)
-        min_area = 1000
+        min_area = Min_GA
         best_cnt = 1
         for cnt in GRcontours:
                 area = cv2.contourArea(cnt)
