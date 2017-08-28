@@ -11,6 +11,8 @@
 #  Last Update: 22.08.17              #
 #######################################
 
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 from copy import copy
 import time
 import cv2
@@ -19,13 +21,15 @@ import dc_motors
 cc = dc_motors.Motor.cameracontrol
 
 # initialize the camera and grab a reference to the raw camera capture
-cap = cv2.VideoCapture(0)
-cap.set(3,320)
-cap.set(4,240)
-cap.set(15,1)
+camera = PiCamera()
+camera.resolution = (320, 240)
+camera.framerate = 50
+camera.hflip = False
+
+rawCapture = PiRGBArray(camera, size=(320, 240))
  
 # allow the camera to warmup
-time.sleep(5)
+time.sleep(0.1)
 
 def nothing(x):
     pass
@@ -67,9 +71,9 @@ cv2.createTrackbar('Y: Custom Dot','customDotSetup',0,240,nothing)
 cv2.createTrackbar('On : Off','Camera Angle',0,1,nothing)
 
 
-while True:
-       # image feeds to apply masks on
-        ret, image = cap.read()
+for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
+        # image feeds to apply masks on
+        image = frame.array
         Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         Oimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         # blurred image to show detection status
@@ -218,6 +222,10 @@ while True:
         cv2.imshow("All Dots View",Eblur)   # Shows every dots that has been mapped during this time.
 
         key = cv2.waitKey(1) & 0xFF
+ 
+	# clear the stream in preparation for the next frame
+        rawCapture.truncate(0)
+ 
 	# if the `q` key was pressed, break from the loop
         if key == ord("q"):
             cv2.destroyAllWindows()

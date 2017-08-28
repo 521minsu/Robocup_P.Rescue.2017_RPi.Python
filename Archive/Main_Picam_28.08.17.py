@@ -15,6 +15,8 @@
 ##############################################
 
 #Camera & Opencv related modules
+from picamera.array import PiRGBArray
+from picamera import PiCamera
 from copy import copy
 import time
 import cv2
@@ -47,21 +49,23 @@ WTDone = 0
 bx,by,gx,gy,rx,ry = 0,0,0,0,0,0
 
 # initialize the camera and grab a reference to the raw camera capture
-cap = cv2.VideoCapture(0)
-cap.set(3,320)
-cap.set(4,240)
-cap.set(15,1)
+camera = PiCamera()
+camera.resolution = (320, 240)
+camera.framerate = 50
+camera.hflip = False
 
 cc(cc,'down')
+
+rawCapture = PiRGBArray(camera, size=(320, 240))
  
 # allow the camera to warmup
-time.sleep(5)
+time.sleep(1)
 
 # capture frames from the camera
-while True:      
+for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
       if Rescue == False:
           # image from the Picam
-          ret,image = cap.read()
+          image = frame.array
           # images from the Picam with filters and effects
           Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
           blur = cv2.blur(image, (3,3))
@@ -69,8 +73,8 @@ while True:
           Min_BB,Min_BG,Min_BR = 0,0,0
           Max_BB,Max_BG,Max_BR = 255,100,255
           
-          Min_GH,Min_GS,Min_GV = 57,59,111
-          Max_GH,Max_GS,Max_GV = 89,255,255
+          Min_GH,Min_GS,Min_GV = 79,0,143
+          Max_GH,Max_GS,Max_GV = 152,12,216
           
           #Please Run Calibration.py first, and bring back the values according to the current situation
           Blower = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8")
@@ -87,8 +91,8 @@ while True:
           Gimage, GRcontours,GRhierarchy = cv2.findContours(Gmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           
           visionmask=cv2.imread('mask_noside.png',0)
-          res = cv2.bitwise_and(Bmask,Bmask,mask=visionmask)
-          Gres = cv2.bitwise_and(Gmask,Gmask,mask=visionmask)
+          res = Bmask[150:210]
+          Gres = Gmask[150:210]
           
           res, Rcontours,Rhierarchy = cv2.findContours(res,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           Gres, Gcontours,Ghierarchy = cv2.findContours(Gres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -108,7 +112,7 @@ while True:
           bx,by = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
           
           # finding contour with maximum area and store it as best_cnt - Green Area
-          min_area = 1000
+          min_area = 600
           best_cnt = 1
           for cnt in Gcontours:
                   area = cv2.contourArea(cnt)
@@ -180,6 +184,9 @@ while True:
           #cv2.imshow("Bres",res)
           
           key = cv2.waitKey(1) & 0xFF
+          
+                    # clear the stream in preparation for the next frame
+          rawCapture.truncate(0)
       
           print(dist)
       
@@ -189,13 +196,13 @@ while True:
             
       elif Rescue == True:
           # image from the Picam
-          image = cap.read()
+          image = frame.array
           # images from the Picam with filters and effects
           Rimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
           blur = cv2.blur(image, (3,3))
           
-          Min_OH,Min_OS,Min_OV = 156,89,82        #Please put in the calibrated values
-          Max_OH,Max_OS,Max_OV = 220,255,255
+          Min_OH,Min_OS,Min_OV = 146,149,88        #Please put in the calibrated values
+          Max_OH,Max_OS,Max_OV = 220,222,255
           
           #Please Run Calibration.py first, and bring back the values according to the current situation
           Olower = np.array([Min_OH,Min_OS,Min_OV],dtype="uint8")
@@ -239,6 +246,9 @@ while True:
           print("distance:{}".format(dist))
           
           key = cv2.waitKey(1) & 0xFF
+          
+          # clear the stream in preparation for the next frame
+          rawCapture.truncate(0)
 
           curTime = round(time.time())
           timePassed = curTime - startTime

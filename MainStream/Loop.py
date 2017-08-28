@@ -49,23 +49,23 @@ class MainControl(object):
     
     def greenturn(self,turnerror):
         # 100 - 110
-        if turnerror > 0: # turn left
+        if turnerror > 0: # turn right
             dc(dc,0,0)
             dc(dc,100,100)
             time.sleep(0.7)
             dc(dc,0,0)
             dc(dc,100,-100)
-            time.sleep(0.95)
+            time.sleep(0.75)
             dc(dc,0,0)
             dc(dc,-100,100)
             print("turned left")
-        elif turnerror < 0: # turn right
+        elif turnerror < 0: # turn left
             dc(dc,0,0)
             dc(dc,100,100)
             time.sleep(0.7)
             dc(dc,0,0)
             dc(dc,-100,100)
-            time.sleep(0.85)
+            time.sleep(0.75)
             dc(dc,0,0)
             dc(dc,100,-100)
             print("turned right")
