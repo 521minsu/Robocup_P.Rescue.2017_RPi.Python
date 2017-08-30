@@ -23,7 +23,7 @@ def __init__():
 class MainControl(object):
     def linetrace(self,error):
         mSpeed = 100
-        Kp,Ki,Kd = 120,10,0    # 100,10,0
+        Kp,Ki,Kd = 120,10,0    # 120,10,0
         integral,derivative,lasterror = 0,0,0
         pidturn = 0
         if error != 9000:
@@ -55,7 +55,7 @@ class MainControl(object):
             time.sleep(0.7)
             dc(dc,0,0)
             dc(dc,100,-100)
-            time.sleep(0.75)
+            time.sleep(1)
             dc(dc,0,0)
             dc(dc,-100,100)
             print("turned left")
@@ -65,7 +65,7 @@ class MainControl(object):
             time.sleep(0.7)
             dc(dc,0,0)
             dc(dc,-100,100)
-            time.sleep(0.75)
+            time.sleep(1)
             dc(dc,0,0)
             dc(dc,100,-100)
             print("turned right")

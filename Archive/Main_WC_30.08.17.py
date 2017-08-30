@@ -15,8 +15,6 @@
 ##############################################
 
 #Camera & Opencv related modules
-from picamera.array import PiRGBArray
-from picamera import PiCamera
 from copy import copy
 import time
 import cv2
@@ -49,34 +47,30 @@ WTDone = 0
 bx,by,gx,gy,rx,ry = 0,0,0,0,0,0
 
 # initialize the camera and grab a reference to the raw camera capture
-camera = PiCamera()
-camera.resolution = (320, 240)
-camera.framerate = 50
-camera.hflip = False
+cap = cv2.VideoCapture(0)
+cap.set(3,320)
+cap.set(4,240)
+cap.set(15,1)
 
 cc(cc,'down')
-
-rawCapture = PiRGBArray(camera, size=(320, 240))
  
 # allow the camera to warmup
-time.sleep(1)
+time.sleep(5)
 
 # capture frames from the camera
-for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
+while True:      
       if Rescue == False:
           # image from the Picam
-          original = frame.array
-          hflip = cv2.flip(original,0)
-          image = cv2.flip(hflip,1)
+          ret,image = cap.read()
           # images from the Picam with filters and effects
           Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
           blur = cv2.blur(image, (3,3))
           
           Min_BB,Min_BG,Min_BR = 0,0,0
-          Max_BB,Max_BG,Max_BR = 255,57,255
+          Max_BB,Max_BG,Max_BR = 255,86,255
           
-          Min_GH,Min_GS,Min_GV = 27,76,52
-          Max_GH,Max_GS,Max_GV = 80,170,183
+          Min_GH,Min_GS,Min_GV = 27,43,13
+          Max_GH,Max_GS,Max_GV = 76,170,165
           
           #Please Run Calibration.py first, and bring back the values according to the current situation
           Blower = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8")
@@ -85,17 +79,18 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           Glower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
           Gupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
           
-          # Pure Masked image without any limits on its vision
           Gmask = cv2.inRange(Gimage,Glower,Gupper)
           Bmask = cv2.inRange(image,Blower,Bupper)
           
-          #########################################
-          #   Finding contours for line tracing   #
-          #########################################
-          Bres = Bmask[30:90]
-          Gres = Gmask[150:210]
+          # find contours in the threshold image
+          image, contours,hierarchy = cv2.findContours(Bmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+          Gimage, GRcontours,GRhierarchy = cv2.findContours(Gmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           
-          Bres, Rcontours,Rhierarchy = cv2.findContours(Bres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+          visionmask=cv2.imread('mask_noside.png',0)
+          res = cv2.bitwise_and(Bmask,Bmask,mask=visionmask)
+          Gres = cv2.bitwise_and(Gmask,Gmask,mask=visionmask)
+          
+          res, Rcontours,Rhierarchy = cv2.findContours(res,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           Gres, Gcontours,Ghierarchy = cv2.findContours(Gres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
               
           # finding contour with maximum area and store it as best_cnt - Black Area
@@ -113,7 +108,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           bx,by = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
           
           # finding contour with maximum area and store it as best_cnt - Green Area
-          min_area = 530
+          min_area = 1000
           best_cnt = 1
           for cnt in Gcontours:
                   area = cv2.contourArea(cnt)
@@ -126,31 +121,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           # gx, gy = green area following yellow dot
           gx,gy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
           
-          #############################################
-          #   Finding contours for rescue detection   #
-          #############################################
-          BRres = Bmask[:, 145:175]
-          GRres = Gmask[:, 145:175]
-          
-          BRres, RRcontours,RRhierarchy = cv2.findContours(BRres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-          GRres, GRcontours,GRhierarchy = cv2.findContours(GRres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-        
-          # Rescue Area - Black Detection
-          min_area = 10
-          best_cnt = 1
-          for cnt in RRcontours:
-                  area = cv2.contourArea(cnt)
-                  if area > min_area:
-                          min_area = area
-                          best_cnt = cnt
-          
-          # finding centroids of best_cnt and draw a circle there
-          M = cv2.moments(best_cnt)
-          # rbx, rby = Black detection on rescue detection ROI
-          rbx,rby = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-          
-          # Rescue Area - Green Detection
-          min_area = 1000
+          # finding contour with maximum area and store it as best_cnt - Rescue Area
+          min_area = 530
           best_cnt = 1
           for cnt in GRcontours:
                   area = cv2.contourArea(cnt)
@@ -160,16 +132,15 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           
           # finding centroids of best_cnt and draw a circle there
           M = cv2.moments(best_cnt)
-          # rgx, rgy = Green detection on rescue detection ROI
-          rgx,rgy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
+          # rx, ry = Pink dot when Rescue has been reached.
+          rx,ry = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
           
           
           # green dot where the middle line of the video feed is
-          cv2.circle(blur,(rbx,rby),5,(255,0,255),-1)  # Pink Dot
-          cv2.circle(blur,(rgx,rgy),5,(255,255,0),-1)  # Cyan Dot
-          cv2.circle(blur,(gx,gy),5,(255,0,0),-1)      # Blue Dot
-          cv2.circle(blur,(bx,by),5,(0,0,255),-1)      # Red Dot
-          cv2.circle(blur,(170,160),5,(0,255,0),-1)    # Green Dot
+          cv2.circle(blur,(rx,ry),5,(255,255,0),-1)
+          cv2.circle(blur,(gx,gy),5,(255,0,0),-1)
+          cv2.circle(blur,(bx,by),5,(0,0,255),-1)
+          cv2.circle(blur,(170,160),5,(0,255,0),-1)
           lineerror,turnerror = 1000,1000
           
           # Gets the distance Value, but reads 5 times so there's no typeError when going through rest of the program
@@ -189,7 +160,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
               WTDone += 1
               print("From Main.py WT... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
           elif WTDone >= WTLimit:
-              if rbx != 0 and rgx == 0 and dist <= 60:
+              if rx != 0 and bx == 0 and dist <= 60:
                   dc(dc,0,0)
                   print("From Main.py rescue_init... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
                   cc(cc,'up')
@@ -209,9 +180,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           #cv2.imshow("Bres",res)
           
           key = cv2.waitKey(1) & 0xFF
-          
-                    # clear the stream in preparation for the next frame
-          rawCapture.truncate(0)
       
           print(dist)
       
@@ -221,15 +189,13 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             
       elif Rescue == True:
           # image from the Picam
-          original = frame.array
-          hflip = cv2.flip(original,0)
-          image = cv2.flip(hflip,1)
+          image = cap.read()
           # images from the Picam with filters and effects
           Rimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
           blur = cv2.blur(image, (3,3))
           
-          Min_OH,Min_OS,Min_OV = 124,22,32        #Please put in the calibrated values
-          Max_OH,Max_OS,Max_OV = 201,101,136
+          Min_OH,Min_OS,Min_OV = 156,89,82        #Please put in the calibrated values
+          Max_OH,Max_OS,Max_OV = 220,255,255
           
           #Please Run Calibration.py first, and bring back the values according to the current situation
           Olower = np.array([Min_OH,Min_OS,Min_OV],dtype="uint8")
@@ -237,7 +203,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           
           Rmask = cv2.inRange(Rimage,Olower,Oupper)
           
-          Rres = Rmask[:,145:175]
+          resvisionmask=cv2.imread('rescue_mask.png',0)
+          Rres = cv2.bitwise_and(Rmask,Rmask,mask=resvisionmask)
           
           Rres, Rcontours,Rhierarchy = cv2.findContours(Rres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           
@@ -272,9 +239,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           print("distance:{}".format(dist))
           
           key = cv2.waitKey(1) & 0xFF
-          
-          # clear the stream in preparation for the next frame
-          rawCapture.truncate(0)
 
           curTime = round(time.time())
           timePassed = curTime - startTime
