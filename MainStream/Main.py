@@ -62,6 +62,15 @@ rawCapture = PiRGBArray(camera, size=(320, 240))
 time.sleep(1)
 
 # capture frames from the camera
+dc(dc,0,0)
+cc(cc,'up')
+time.sleep(1)
+startTime = round(time.time())
+timePassed = 0
+victimFound = 0
+searchDir = 0
+Rescue = True
+
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
       if Rescue == False:
           # image from the Picam
@@ -237,12 +246,16 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           
           Rmask = cv2.inRange(Rimage,Olower,Oupper)
           
-          Rres = Rmask[:,145:175]
+          Rres = Rmask[:,135:185]
           
           Rres, Rcontours,Rhierarchy = cv2.findContours(Rres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           
+          for i in range(0,5):
+              dist = SR.value('distance')
+        
+        
           # finding contour with maximum area and store it as best_cnt - Rescue Area
-          min_area = 255
+          min_area = 1000
           best_cnt = 1
           for cnt in Rcontours:
                   area = cv2.contourArea(cnt)
@@ -253,16 +266,18 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           M = cv2.moments(best_cnt)
           # rx, ry = Pink dot when Rescue has been reached.
           rx,ry = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-          
+          if rx != 0:
+              rx = rx + 135 # To cover the cutted image thing
+              print("Platfrom found... Ignoring the distance val...")
+          if rx != 0 and ry != 0 and dist > 70:
+              rx,ry = 0,0
+              print("Platform was deteted, but might be just an error. Ignoring the camera...")
           # green dot where the middle line of the video feed is
           cv2.circle(blur,(rx,ry),5,(255,255,0),-1)
-          cv2.circle(blur,(60,160),5,(0,255,0),-1)
+          cv2.circle(blur,(160,160),5,(0,255,0),-1)
           
-          for i in range(0,5):
-              dist = SR.value('distance')
-          
-          
-          if dist <= 40 and rx == 0 and ry == 0:
+          if dist <= 45 and rx == 0 and ry == 0:
+              print("Found the victim... dist:{}".format(dist))
               CatchIt = True
               break
           
@@ -282,14 +297,18 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           if timePassed >= 2:
               if searchDir == 0: # Converting from Left to Right
                   searchDir = 1
+                  print("Changing dir - from L to R")
               elif searchDir == 1: # Converting from RIght to Left
                   searchDir = 0
+                  print("Changing dir - from R to L")
               startTime = round(time.time())
 
           if searchDir == 0:
-              dc(dc,-50,50)
+              dc(dc,-75,75)
           elif searchDir == 1:
-              dc(dc,50,-50)
+              dc(dc,75,-75)
+              
+          print("Still Running...")
 
           # if the `q` key was pressed, break from the loop
           if key == ord("q"):

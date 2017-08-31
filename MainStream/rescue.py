@@ -26,6 +26,7 @@ def catchVictim():
     while dist > 9:
         dc(dc,100,100)
         dist = SR.value('distance')
+        print("Approaching Victim... dist:{}".format(dist))
     # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
     dc(dc,100,100)
     time.sleep(0.5)
@@ -36,6 +37,7 @@ def catchVictim():
     lc(lc,'lift','catch')
     time.sleep(0.5)
     # Calls the searchPlatform function and searches for the platform
+    dist = 80
     searchPlatform(dist)
 
 
@@ -46,6 +48,7 @@ def searchPlatform(distance):
     
     while dist > 25:
         dist = SR.value('distance')
+        print("Searching for the platfrom... dist:{}".format(dist))
         
         curTime = round(time.time())
         TimePassed = curTime - startTime
@@ -64,13 +67,17 @@ def searchPlatform(distance):
     
     dc(dc,0,0)
     print("Platform Found... Entering the Final Phrase...")
+    dist = 80
     placeAndFinish(dist)
     
 def placeAndFinish(distance):
     dist = distance
     # Go straight until IR sensor returns 8cm or less
     while dist > 8:
+        dist = SR.value('distance')
         dc(dc,100,100)
+        print("Approaching the platfrom... dist:{}".format(dist))
+        
     # Go straight for 0.5 seconds more in order to make sure that there is a platform in front of the robot
     dc(dc,100,100)
     time.sleep(0.5)
@@ -78,13 +85,15 @@ def placeAndFinish(distance):
     dc(dc,0,0)
     
     lc(lc,'idle','release')
+    time.sleep(1)
     
     dc(dc,-100,-100)
-    time.sleep(2)
+    time.sleep(0.75)
     dc(dc,0,0)
     finished = True
     finish()
     
     
 def finish():
+    print("Finished the rescue sequence...")
     dc_motors.Motor.cleanup(dc_motors)
