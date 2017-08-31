@@ -63,15 +63,21 @@ time.sleep(1)
 
 # capture frames from the camera
 dc(dc,0,0)
-cc(cc,'up')
 time.sleep(1)
-startTime = round(time.time())
-timePassed = 0
+turnTime = 0
 victimFound = 0
 searchDir = 0
+edgeReached = 0
 Rescue = True
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
+      #Make sure You are putting calibrated values in
+      Min_BB,Min_BG,Min_BR = 0,0,0
+      Max_BB,Max_BG,Max_BR = 255,57,255
+          
+      Min_GH,Min_GS,Min_GV = 27,76,52
+      Max_GH,Max_GS,Max_GV = 80,170,183
+          
       if Rescue == False:
           # image from the Picam
           original = frame.array
@@ -80,12 +86,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           # images from the Picam with filters and effects
           Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
           blur = cv2.blur(image, (3,3))
-          
-          Min_BB,Min_BG,Min_BR = 0,0,0
-          Max_BB,Max_BG,Max_BR = 255,57,255
-          
-          Min_GH,Min_GS,Min_GV = 27,76,52
-          Max_GH,Max_GS,Max_GV = 80,170,183
           
           #Please Run Calibration.py first, and bring back the values according to the current situation
           Blower = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8")
@@ -201,11 +201,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
               if rbx != 0 and rgx == 0 and dist <= 60:
                   dc(dc,0,0)
                   print("From Main.py rescue_init... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
-                  cc(cc,'up')
                   time.sleep(1)
-                  startTime = round(time.time())
-                  timePassed = 0
+                  turnTime = 0
                   victimFound = 0
+                  edgeReached = 0
                   searchDir = 0
                   Rescue = True
           else:
@@ -229,6 +228,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
       ##############################################################################
             
       elif Rescue == True:
+          
+          needtoWait = False
+          
+          if searchDir == 0:
+              dc(dc,-75,75)
+          elif searchDir == 1:
+              dc(dc,75,-75)
+              if needtoWait == True:
+                    time.sleep(2)
+                    needtoWait = False
+          
           # image from the Picam
           original = frame.array
           hflip = cv2.flip(original,0)
@@ -237,25 +247,15 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           Rimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
           blur = cv2.blur(image, (3,3))
           
-          Min_OH,Min_OS,Min_OV = 124,22,32        #Please put in the calibrated values
-          Max_OH,Max_OS,Max_OV = 201,101,136
+          GRlower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
+          GRupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
           
-          #Please Run Calibration.py first, and bring back the values according to the current situation
-          Olower = np.array([Min_OH,Min_OS,Min_OV],dtype="uint8")
-          Oupper = np.array([Max_OH,Max_OS,Max_OV],dtype="uint8")
+          # Pure Masked image without any limits on its vision
+          Rmask = cv2.inRange(Rimage,GRlower,GRupper)
+          Rmask, Rcontours,Rhierarchy = cv2.findContours(Rmask,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
           
-          Rmask = cv2.inRange(Rimage,Olower,Oupper)
-          
-          Rres = Rmask[:,135:185]
-          
-          Rres, Rcontours,Rhierarchy = cv2.findContours(Rres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-          
-          for i in range(0,5):
-              dist = SR.value('distance')
-        
-        
           # finding contour with maximum area and store it as best_cnt - Rescue Area
-          min_area = 1000
+          min_area = 70000
           best_cnt = 1
           for cnt in Rcontours:
                   area = cv2.contourArea(cnt)
@@ -266,54 +266,32 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
           M = cv2.moments(best_cnt)
           # rx, ry = Pink dot when Rescue has been reached.
           rx,ry = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-          if rx != 0:
-              rx = rx + 135 # To cover the cutted image thing
-              print("Platfrom found... Ignoring the distance val...")
-          if rx != 0 and ry != 0 and dist > 70:
-              rx,ry = 0,0
-              print("Platform was deteted, but might be just an error. Ignoring the camera...")
-          # green dot where the middle line of the video feed is
-          cv2.circle(blur,(rx,ry),5,(255,255,0),-1)
-          cv2.circle(blur,(160,160),5,(0,255,0),-1)
-          
-          if dist <= 45 and rx == 0 and ry == 0:
-              print("Found the victim... dist:{}".format(dist))
-              CatchIt = True
-              break
-          
           cv2.imshow("result",blur)
           cv2.imshow("Rmask",Rmask)
-          cv2.imshow("Rres",Rres)
-          print("distance:{}".format(dist))
           
+          if rx == 0 and ry == 0:
+              if edgeReached == 0:
+                  startTime = time.time()
+                  searchDir = 1
+                  edgeReached = 1
+                  needtoWait = True
+                  dc(dc,0,0)
+                  rx = 123
+              elif edgeReached == 1:   #### Find a way to cancel double detection ####
+                  finTime = time.time()
+                  turnTime = finTime - startTime
+                  searchDir = 0
+                  dc(dc,0,0)
+                  rescue.searchVictim(turnTime,searchDir)
+                  edgeReached = 2
+                  
+                  
           key = cv2.waitKey(1) & 0xFF
           
           # clear the stream in preparation for the next frame
           rawCapture.truncate(0)
-
-          curTime = round(time.time())
-          timePassed = curTime - startTime
-
-          if timePassed >= 2:
-              if searchDir == 0: # Converting from Left to Right
-                  searchDir = 1
-                  print("Changing dir - from L to R")
-              elif searchDir == 1: # Converting from RIght to Left
-                  searchDir = 0
-                  print("Changing dir - from R to L")
-              startTime = round(time.time())
-
-          if searchDir == 0:
-              dc(dc,-75,75)
-          elif searchDir == 1:
-              dc(dc,75,-75)
               
-          print("Still Running...")
-
-          # if the `q` key was pressed, break from the loop
-          if key == ord("q"):
-              cv2.destroyAllWindows()
-              break
+          print("Still Running... SD:{} \t eR:{} \t ntw:{} \t rx:{} \t ry:{}".format(searchDir,edgeReached,needtoWait,rx,ry))
               
 if CatchIt == True:
     rescue.catchVictim()

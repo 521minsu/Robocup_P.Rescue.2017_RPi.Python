@@ -20,6 +20,31 @@ lc = dc_motors.Motor.liftcontrol
 import SensorReading as SR
     
 #####################################################################
+def searchVictim(turnTime,searchDir):
+    numberofArrays = 40
+    arrayTime = turnTime/numberofArrays
+    arrayTime = arrayTime/1000
+    
+    arrayDistance = []
+    
+    for i in range(0,numberofArrays):
+        if searchDir == 0:
+            dc(dc,75,-75)
+        if searchDir == 1:
+            dc(dc,-75,75)
+        time.sleep(arrayTime)
+        for i in range(5):
+            dist = SR.value('distance')
+        arrayDistance.append(dist)
+        print("Detecting in progress... i:{} \t dist:{}".format(i,dist))
+    if searchDir == 0:
+        searchDir = 1
+    elif searchDir == 1:
+        searchDir = 0
+    dc(dc,0,0)
+    raise "TypeError"
+          
+
 def catchVictim():
     dist = 80 # Minimise the number of SR call
     # Catches the victim after finding it

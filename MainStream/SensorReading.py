@@ -13,7 +13,7 @@
 
 import serial, time, struct
 
-ser = serial.Serial('/dev/ttyUSB0',9600)
+ser = serial.Serial('/dev/ttyUSB2',9600)
 
 def value(sensor):
     while ser.inWaiting()==0:
