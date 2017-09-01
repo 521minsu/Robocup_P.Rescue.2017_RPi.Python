@@ -23,7 +23,7 @@ def __init__():
 class MainControl(object):
     def linetrace(self,error):
         mSpeed = 100
-        Kp,Ki,Kd = 120,10,0    # 120,10,0
+        Kp,Ki,Kd = 90,10,0    # New:90,10,0  # Old:120,10,0
         integral,derivative,lasterror = 0,0,0
         pidturn = 0
         if error != 9000:

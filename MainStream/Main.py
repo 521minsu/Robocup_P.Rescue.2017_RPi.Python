@@ -64,10 +64,10 @@ time.sleep(1)
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
     #Make sure You are putting calibrated values in
     Min_BB,Min_BG,Min_BR = 0,0,0
-    Max_BB,Max_BG,Max_BR = 255,57,255
+    Max_BB,Max_BG,Max_BR = 255,47,255
     
-    Min_GH,Min_GS,Min_GV = 27,76,52
-    Max_GH,Max_GS,Max_GV = 80,170,183
+    Min_GH,Min_GS,Min_GV = 21,63,54
+    Max_GH,Max_GS,Max_GV = 80,196,197
     
     # image from the Picam
     original = frame.array

@@ -27,25 +27,29 @@ def value(sensor):
             lCSVal = int(senVal[1])
             rCSVal = int(senVal[2])
             
-            Min_G,Max_G = 321,354
+            Min_G,Max_G = 500,600
             
             if irVal > 80:
                 irVal = 80
                 
             if Min_G < lCSVal < Max_G:
-                lCSVal = 'green'
+                lCSColor = 'green'
             else:
-                lCSVal = 'other'
+                lCSColor = 'other'
             if Min_G < rCSVal < Max_G:
-                rCSVal = 'green'
+                rCSColor = 'green'
             else:
-                rCSVal = 'other'
+                rCSColor = 'other'
             
             if sensor == 'distance':
                 return irVal
-            elif sensor == 'leftCS':
+            elif sensor == 'left_CS':
+                return lCSColor
+            elif sensor == 'right_CS':
+                return rCSColor
+            elif sensor == 'left_CS_Raw':
                 return lCSVal
-            elif sensor == 'rightCS':
+            elif sensor == 'right_CS_Raw':
                 return rCSVal
             
 ##            print("Raw:{} \t Prox: {} \t Distance:{}".format(rawData,proxVal,irVal))
