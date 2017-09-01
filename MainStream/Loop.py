@@ -49,21 +49,22 @@ class MainControl(object):
     
     def greenturn(self,turnerror):
         # 100 - 110
+        dc(dc,0,0)
+        dc(dc,100,100)
+        time.sleep(0.7)
+        dc(dc,0,0)
+        lCSVal = SR.value('left_CS')
+        rCSVal = SR.value('right_CS')
+        
+        if lCSVal == 'green' and rCSVal == 'green':
+            rescue.searchVictim(0)
         if turnerror > 0: # turn right
-            dc(dc,0,0)
-            dc(dc,100,100)
-            time.sleep(0.7)
-            dc(dc,0,0)
             dc(dc,100,-100)
             time.sleep(1)
             dc(dc,0,0)
             dc(dc,-100,100)
             print("turned left")
         elif turnerror < 0: # turn left
-            dc(dc,0,0)
-            dc(dc,100,100)
-            time.sleep(0.7)
-            dc(dc,0,0)
             dc(dc,-100,100)
             time.sleep(1)
             dc(dc,0,0)

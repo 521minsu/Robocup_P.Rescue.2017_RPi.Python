@@ -20,7 +20,46 @@ lc = dc_motors.Motor.liftcontrol
 import SensorReading as SR
     
 #####################################################################
-def searchVictim(turnTime,searchDir):
+def searchVictim(searchDir):
+    edgeReached = 0
+    prev_detection = 'other'
+    
+    while edgeReached < 2:
+        if searchDir == 0:
+            dc(dc,75,-75)
+        elif searchDir == 1:
+            dc(dc,-75,75)
+        
+        for i in range(5):
+            lCSVal = SR.value('left_CS')
+            rCSVal = SR.value('right_CS')
+            
+        if edgeReached == 0 and lCSVal == 'other':
+            dc(dc,0,0)
+            startTime = time.time()
+            prev_detection = 'left'
+            searchDir = 0
+        elif edgeReached == 0 and rCSVal == 'other':
+            dc(dc,0,0)
+            startTime = time.time()
+            prev_detection = 'right'
+            searchDir = 1
+            
+        if edgeReached == 1 and lCSVal == 'other' and prev_detection == 'right':
+            dc(dc,0,0)
+            curTime = time.time()
+            turnTime = curTime - startTime
+            searchDir = 1
+            edgeReached = 2
+        elif edgeReached == 1 and rCSVal == 'other' and prev_detection == 'left':
+            dc(dc,0,0)
+            curTime = time.time()
+            turnTime = curTime - startTime
+            searchDir = 0
+            edgeReached = 2
+            
+            
+            
     numberofArrays = 40
     arrayTime = turnTime/numberofArrays
     arrayTime = arrayTime/1000

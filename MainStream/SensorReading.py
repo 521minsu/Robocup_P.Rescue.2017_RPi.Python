@@ -13,7 +13,7 @@
 
 import serial, time, struct
 
-ser = serial.Serial('/dev/ttyUSB2',9600)
+ser = serial.Serial('/dev/ttyUSB0',9600)
 
 def value(sensor):
     while ser.inWaiting()==0:
@@ -23,16 +23,30 @@ def value(sensor):
         if rawData != b'':
             rawrData = rawData.decode()
             senVal = rawrData.split(",")
-            proxVal = int(senVal[0])
-            irVal = int(senVal[1])
+            irVal = int(senVal[0])
+            lCSVal = int(senVal[1])
+            rCSVal = int(senVal[2])
+            
+            Min_G,Max_G = 321,354
             
             if irVal > 80:
                 irVal = 80
+                
+            if Min_G < lCSVal < Max_G:
+                lCSVal = 'green'
+            else:
+                lCSVal = 'other'
+            if Min_G < rCSVal < Max_G:
+                rCSVal = 'green'
+            else:
+                rCSVal = 'other'
             
             if sensor == 'distance':
                 return irVal
-            elif sensor == 'proximity':
-                return proxVal
+            elif sensor == 'leftCS':
+                return lCSVal
+            elif sensor == 'rightCS':
+                return rCSVal
             
 ##            print("Raw:{} \t Prox: {} \t Distance:{}".format(rawData,proxVal,irVal))
 ##            print(rawData)
