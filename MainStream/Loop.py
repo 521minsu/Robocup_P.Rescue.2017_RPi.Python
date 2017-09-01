@@ -46,32 +46,31 @@ class MainControl(object):
             dc(dc,Lspeed,Rspeed)
         else:
             pass
+            
     
-    def greenturn(self,turnerror):
+    def greenturn(self,turnDir):
         # 100 - 110
         dc(dc,0,0)
         dc(dc,100,100)
         time.sleep(0.7)
         dc(dc,0,0)
-        lCSVal = SR.value('left_CS')
-        rCSVal = SR.value('right_CS')
         
-        if lCSVal == 'green' and rCSVal == 'green':
-            rescue.searchVictim(0)
-        if turnerror > 0: # turn right
-            dc(dc,100,-100)
+        if turnDir == 'left': # turn left
+            dc(dc,-100,100)
             time.sleep(1)
             dc(dc,0,0)
-            dc(dc,-100,100)
+            dc(dc,100,-100)
             print("turned left")
-        elif turnerror < 0: # turn left
-            dc(dc,-100,100)
+        elif turnDir == 'right': # turn right
+            dc(dc,100,-100)
             time.sleep(1)
             dc(dc,0,0)
-            dc(dc,100,-100)
+            dc(dc,-100,100)
             print("turned right")
         else:
             pass # Maybe an error has occured during the run, ignoring the call... 
+            
+            
     def watertower(self,usval):
         if usval == int():
             if usval < 30:   # When there is an obstacle in 30cm range...
