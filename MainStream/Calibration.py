@@ -87,10 +87,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Blower = np.array([0,0,0],dtype="uint8")
         Bupper = np.array([255,Max_BG,255],dtype="uint8")
         #For Green, start with Min(20,60,50) Max(80,200,200), when calibrating
-##        Glower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
-##        Gupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
-        Glower = np.array([120,10,70],dtype="uint8")
-        Gupper = np.array([180,175,155],dtype="uint8")
+        Glower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
+        Gupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
+##        Glower = np.array([120,10,70],dtype="uint8")
+##        Gupper = np.array([180,175,155],dtype="uint8")
         
         # Apply mask that is created by detecting colors
         Bmask = cv2.inRange(image,Blower,Bupper)

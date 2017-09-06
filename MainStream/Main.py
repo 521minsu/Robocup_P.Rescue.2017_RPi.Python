@@ -28,6 +28,7 @@ import SensorReading as SR
 import rescue
 
 Rescue_start = False
+SearchPlatform = False
 
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
@@ -56,7 +57,7 @@ camera.hflip = False
 
 cc(cc,'down')
 dc(dc,0,0)
-lc(lc,'idle','release')
+##lc(lc,'idle','release')
 
 rawCapture = PiRGBArray(camera, size=(320, 240))
 
@@ -70,6 +71,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
     Min_GH,Min_GS,Min_GV = 21,63,54
     Max_GH,Max_GS,Max_GV = 80,196,197
+    
+    Min_VB,Min_VG,Min_VR = 0,0,0
+    Max_VB,Max_VG,Max_VR = 255,228,255
+        
+    Min_OH,Min_OS,Min_OV = 120,20,50
+    Max_OH,Max_OS,Max_OV = 185,95,125
     
     if Rescue_start == False:
         #########################################
@@ -164,7 +171,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if gx_low < gx < gx_high and bx == 0:
             print("Rescue starting")
             dc(dc,100,100)
-            time.sleep(0.5)
+            time.sleep(1)
             dc(dc,0,0)
             cc(cc,'up')
             time.sleep(1)
@@ -200,41 +207,56 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         original = frame.array
         hflip = cv2.flip(original,1)
         image = cv2.flip(hflip,0)
+        Vimage = image
         Oimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         
-        Min_OH,Min_OS,Min_OV = 120,10,70
-        Max_OH,Max_OS,Max_OV = 180,175,155
+        Vlower = np.array([Min_VB,Min_VG,Min_VR],dtype="uint8")
+        Vupper = np.array([Max_VB,Max_VG,Max_VR],dtype="uint8")
         
-        #Please Run Calibration.py first, and bring back the values according to the current situation
         Olower = np.array([Min_OH,Min_OS,Min_OV],dtype="uint8")
         Oupper = np.array([Max_OH,Max_OS,Max_OV],dtype="uint8")
         
         # Pure Masked image without any limits on its vision
+        Vmask = cv2.inRange(Vimage,Vlower,Vupper)
+        thresh,VmaskInv = cv2.threshold(Vmask,127,255,cv2.THRESH_BINARY_INV)
+        Vres = VmaskInv[:,125:195]
+
         Omask = cv2.inRange(Oimage,Olower,Oupper)
         Ores = Omask[:,125:195]
         
+        Vres, Vcontours,Vhierarchy = cv2.findContours(Vres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         Ores, Ocontours,Ohierarchy = cv2.findContours(Ores,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         
         # finding contour with maximum area and store it as best_cnt - Green Area
+        Vmin_area = 50 # Was 530 before
+        Vbest_cnt = 1
+        for Vcnt in Vcontours:
+                Varea = cv2.contourArea(Vcnt)
+                if Varea > Vmin_area:
+                        Vmin_area = Varea
+                        Vbest_cnt = Vcnt
+        # finding centroids of best_cnt and draw a circle there
+        VM = cv2.moments(Vbest_cnt)
+        vx,vy = int(VM['m10']/VM['m00']), int(VM['m01']/VM['m00'])
+        
+        # finding contour with maximum area and store it as best_cnt - Green Are
         Omin_area = 1000 # Was 530 before
         Obest_cnt = 1
-        for Ocnt in Ocontours:
+        for Ocnt in Vcontours:
                 Oarea = cv2.contourArea(Ocnt)
                 if Oarea > Omin_area:
                         Omin_area = Oarea
                         Obest_cnt = Ocnt
         # finding centroids of best_cnt and draw a circle there
         OM = cv2.moments(Obest_cnt)
-        # gx, gy = green area following yellow dot
         ox,oy = int(OM['m10']/OM['m00']), int(OM['m01']/OM['m00'])
         
-        print("ox:{} \t oy:{}".format(ox,oy))
         
         # green dot where the middle line of the video feed is
-        if ox != 0 or oy != 0:
-            ox += 125
-            cv2.circle(Oimage,(ox,oy),5,(255,0,0),-1)      # Blue Dot
-            print("Platform detected... Ignoring the distance...")
+        if vx != 0 or vy != 0:
+            vx += 125
+            cv2.circle(Oimage,(vx,vy),5,(255,0,0),-1)      # Blue Dot
+            print("Victim detected...")
         
         cv2.imshow("Rescue",image)
         
@@ -244,15 +266,44 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             distRaw = SR.value('distance')
             distCal += distRaw
         dist = distCal/3
-        
         print("In rescue... dist:{}".format(dist))
             
-        if ox == 0 and dist < 50:
+        if vx != 0 and SearchPlatform == False:
             print("Initiallizing catchVictim Sequence... dist:{} \t ox:{}".format(dist,ox))
-            rescue.catchVictim()
-            raise "TypeError"
+            while dist > 9:
+                dc(dc,100,100)
+                dist = SR.value('distance')
+                print("Approaching Victim... dist:{}".format(dist))
+            # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
+            dc(dc,100,100)
+            time.sleep(0.5)
+            # Controls the lifting mechanism in order to catch and lift the victim up
+            dc(dc,0,0)
+            lc(lc,'idle','catch')
+            print("From catchVictim... Catching the victim... dist:{}".format(dist))
+            time.sleep(1.5)
+            lc(lc,'lift','catch')
+            print("From catchVictim... Lifting the victim...")
+            time.sleep(1.5)
+            dc(dc,-100,-100)
+            time.sleep(1)
+            dc(dc,0,0)
+            SearchPlatform = True
         
-        dc(dc,-50,50)
+        if ox != 0 and SearchPlatform == True:
+            while dist > 9:
+                dc(dc,100,100)
+                dist = SR.value('distance')
+                print("Approaching Platform... dist:{}".format(dist))
+            # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
+            dc(dc,100,100)
+            time.sleep(0.5)
+            dc(dc,0,0)
+            
+            lc(lc,'idle','release')
+            break
+        
+        dc(dc,-60,60)
         
 
     
