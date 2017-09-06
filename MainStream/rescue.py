@@ -77,9 +77,11 @@ def catchVictim():
     # Controls the lifting mechanism in order to catch and lift the victim up
     dc(dc,0,0)
     lc(lc,'idle','catch')
-    time.sleep(0.5)
+    print("From catchVictim... Catching the victim... dist:{}".format(dist))
+    time.sleep(1.5)
     lc(lc,'lift','catch')
-    time.sleep(0.5)
+    print("From catchVictim... Lifting the victim...")
+    time.sleep(1.5)
     # Calls the searchPlatform function and searches for the platform
     dist = 80
     searchPlatform(dist)
@@ -96,6 +98,7 @@ def searchPlatform(distance):
         
         curTime = round(time.time())
         TimePassed = curTime - startTime
+        print("Time Passed... startTime:{}\t curTime:{}\t TimePassed:{}".format(startTime,curTime,TimePassed))
         
         if TimePassed >= 2:
             if searchDir == 0:
