@@ -29,6 +29,7 @@ import rescue
 
 Rescue_start = False
 SearchPlatform = False
+first = False
 
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
@@ -41,7 +42,7 @@ motor_ENABLE = True                   #
 #######################################
 green_ENABLE = True                   #
 #######################################
-waterTower_ENABLE = True             #
+waterTower_ENABLE = False             #
 WTLimit = 1                           #
 #######################################
 WTDone = 0
@@ -75,8 +76,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     Min_VB,Min_VG,Min_VR = 0,0,0
     Max_VB,Max_VG,Max_VR = 255,228,255
         
-    Min_OH,Min_OS,Min_OV = 150,20,70
-    Max_OH,Max_OS,Max_OV = 170,110,120
+    Min_OH,Min_OS,Min_OV = 120,60,60
+    Max_OH,Max_OS,Max_OV = 180,110,150
     
     
     # image from the Picam
@@ -163,7 +164,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         lineerror,turnerror = 1000,1000
         
         # Gets the distance Value, but reads 5 times so there's no typeError when going through rest of the program
-        dist = SR.value('distance')
+        for i in range(5):
+            dist = SR.value('distance')
         rescue_detection = 0
         
     #============== Search Victim ===================
@@ -171,8 +173,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
      
         if gx_low < gx < gx_high and bx == 0:
             print("Rescue starting")
-            dc(dc,100,100)
-            time.sleep(1)
+##            dc(dc,100,100)
+##            time.sleep(1)
             dc(dc,0,0)
             cc(cc,'up')
             time.sleep(1)
@@ -226,13 +228,13 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Vres = VmaskInv[:,125:195]
 
         Omask = cv2.inRange(Oimage,Olower,Oupper)
-        Ores = Omask[:,125:195]
+        Ores = Omask[:,145:175]
         
         Vres, Vcontours,Vhierarchy = cv2.findContours(Vres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         Ores, Ocontours,Ohierarchy = cv2.findContours(Ores,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         
         # finding contour with maximum area and store it as best_cnt - Green Area
-        Vmin_area = 50 # Was 530 before
+        Vmin_area = 10 # Was 530 before
         Vbest_cnt = 1
         for Vcnt in Vcontours:
                 Varea = cv2.contourArea(Vcnt)
@@ -244,7 +246,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         vx,vy = int(VM['m10']/VM['m00']), int(VM['m01']/VM['m00'])
         
         # finding contour with maximum area and store it as best_cnt - Green Are
-        Omin_area = 1500 # Was 530 before
+        Omin_area = 1000 # Was 530 before
         Obest_cnt = 1
         for Ocnt in Ocontours:
                 Oarea = cv2.contourArea(Ocnt)
@@ -295,6 +297,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             time.sleep(1)
             dc(dc,0,0)
             SearchPlatform = True
+            first = True
             print("From catchVictim... the victim lifted...")
             
         dist = SR.value('distance')
@@ -306,18 +309,24 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 dist = SR.value('distance')
                 print("Approaching Platform... dist:{} ox:{}".format(dist,ox))
             # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
-            dc(dc,100,100)
-            time.sleep(0.5)
+##            dc(dc,100,100)
+##            time.sleep(0.5)
             dc(dc,0,0)
             lc(lc,'idle','release')
             dc(dc,-100,-100)
             time.sleep(0.5)
             dc(dc,0,0)
             print("Releasing the victim... Finishing...")
-##            cv2.destroyAllWindows()
+            cv2.destroyAllWindows()
             break
         
         if SearchPlatform == True:
+            if first == True:
+                dc(dc,0,0)
+                for i in range(300):
+                    dist = SR.value('distance')
+                    print("Running for loop... i:{} \t dist:{}".format(i,dist))
+                first = False
             dc(dc,-65,65)
         else:
             dc(dc,-75,75)
