@@ -41,8 +41,8 @@ motor_ENABLE = True                   #
 #######################################
 green_ENABLE = True                   #
 #######################################
-waterTower_ENABLE = False             #
-WTLimit = 0                           #
+waterTower_ENABLE = True             #
+WTLimit = 1                           #
 #######################################
 WTDone = 0
 
@@ -78,14 +78,16 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     Min_OH,Min_OS,Min_OV = 150,20,70
     Max_OH,Max_OS,Max_OV = 170,110,120
     
+    
+    # image from the Picam
+    original = frame.array
+    hflip = cv2.flip(original,0)
+    image = cv2.flip(hflip,1)
+    
     if Rescue_start == False:
         #########################################
         #   Finding contours for line tracing   #
         #########################################
-        # image from the Picam
-        original = frame.array
-        hflip = cv2.flip(original,0)
-        image = cv2.flip(hflip,1)
         # images from the Picam with filters and effects
         Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         blur = cv2.blur(image, (3,3))
@@ -161,8 +163,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         lineerror,turnerror = 1000,1000
         
         # Gets the distance Value, but reads 5 times so there's no typeError when going through rest of the program
-        for i in range(5):
-            dist = SR.value('distance')
+        dist = SR.value('distance')
         rescue_detection = 0
         
     #============== Search Victim ===================
@@ -188,8 +189,14 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if gx != 0 and bx != 0 and motor_ENABLE == True and green_ENABLE == True:
             turnerror = gx - bx
             Mainloop.greenturn(Mainloop,turnerror)
-        if waterTower_ENABLE == True and WTDone < WTLimit:
-            Mainloop.watertower(Mainloop,dist)
+        if waterTower_ENABLE == True and WTDone < WTLimit and dist < 30:
+            dc(dc,0,0)
+            dc(dc,100,-100)
+            time.sleep(0.5)
+            dc(dc,100,100)
+            time.sleep(0.2)
+            dc(dc,30,100)
+            time.sleep(2)
             WTDone += 1
             #print("From Main.py WT... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
         #else:
@@ -204,9 +211,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         #cv2.imshow("Bres",res)
         
     if Rescue_start == True:
-        original = frame.array
-        hflip = cv2.flip(original,1)
-        image = cv2.flip(hflip,0)
         Vimage = image
         Oimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         
@@ -264,7 +268,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             print("Platform detected... dist:{} ox:{} oy:{}".format(dist,ox,oy))
         
         cv2.imshow("Rescue",image)
-        cv2.imshow("Omask",Ores)
+        cv2.imshow("Omask",Omask)
+        cv2.imshow("Ores",Ores)
         cv2.imshow("Vmask",VmaskInv)
         
         dist = SR.value('distance')
@@ -292,8 +297,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             SearchPlatform = True
             print("From catchVictim... the victim lifted...")
             
-        #dist = SR.value('distance')
-        #print("In rescue... dist:{} ox:{}".format(dist,ox))
+        dist = SR.value('distance')
+##        print("In rescue... dist:{} ox:{}".format(dist,ox))
         
         if ox != 0 and SearchPlatform == True:
             while dist > 9:
@@ -303,7 +308,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
             dc(dc,100,100)
             time.sleep(0.5)
-            cv2.imshow("Omask1",Omask)
             dc(dc,0,0)
             lc(lc,'idle','release')
             dc(dc,-100,-100)
@@ -313,8 +317,10 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
 ##            cv2.destroyAllWindows()
             break
         
-        
-        dc(dc,-75,75)
+        if SearchPlatform == True:
+            dc(dc,-65,65)
+        else:
+            dc(dc,-75,75)
         
 
     

@@ -83,15 +83,3 @@ class MainControl(object):
             print("turned left")
         else:
             pass # Maybe an error has occured during the run, ignoring the call... 
-            
-            
-    def watertower(self,usval):
-        if usval == int():
-            if usval < 30:   # When there is an obstacle in 30cm range...
-                dc(dc,0,0)
-                dc(dc,100,-100)
-                time.sleep(0.5)
-                dc(dc,100,100)
-                time.sleep(0.2)
-                dc(dc,30,100)
-                time.sleep(2)

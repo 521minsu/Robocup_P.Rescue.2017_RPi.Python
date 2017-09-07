@@ -40,7 +40,12 @@ cv2.namedWindow('Green Cal')
 cv2.namedWindow('Camera')
 
 # adding trackbars to the window called 'setting'
+cv2.createTrackbar('Min B','Black Cal',0,255,nothing)
+cv2.createTrackbar('Min G','Black Cal',0,255,nothing)
+cv2.createTrackbar('Min R','Black Cal',0,255,nothing)
+cv2.createTrackbar('Max B','Black Cal',0,255,nothing)
 cv2.createTrackbar('Max G','Black Cal',0,255,nothing)
+cv2.createTrackbar('Max R','Black Cal',0,255,nothing)
 
 cv2.createTrackbar('Min H','Green Cal',0,255,nothing)
 cv2.createTrackbar('Min S','Green Cal',0,255,nothing)
@@ -66,7 +71,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Gblur = cv2.blur(image, (3,3))
         Eblur = cv2.blur(image, (3,3))
         
+        Min_BB = cv2.getTrackbarPos('Min B','Black Cal')
+        Min_BG = cv2.getTrackbarPos('Min G','Black Cal')
+        Min_BR = cv2.getTrackbarPos('Min R','Black Cal')
+        Max_BB = cv2.getTrackbarPos('Max B','Black Cal')
         Max_BG = cv2.getTrackbarPos('Max G','Black Cal')
+        Max_BR = cv2.getTrackbarPos('Max R','Black Cal')
         
         Min_GH = cv2.getTrackbarPos('Min H','Green Cal')
         Min_GS = cv2.getTrackbarPos('Min S','Green Cal')
@@ -84,8 +94,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             cc(cc,'up')
         
         #For Black, start with 50, when calibrating
-        Blower = np.array([0,0,0],dtype="uint8")
-        Bupper = np.array([255,255,Max_BG],dtype="uint8")
+        Blower = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8")
+        Bupper = np.array([Max_BB,Max_BG,Max_BR],dtype="uint8")
         #For Green, start with Min(20,60,50) Max(80,200,200), when calibrating
         Glower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
         Gupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
