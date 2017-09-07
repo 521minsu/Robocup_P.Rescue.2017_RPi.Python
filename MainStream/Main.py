@@ -57,7 +57,7 @@ camera.hflip = False
 
 cc(cc,'down')
 dc(dc,0,0)
-##lc(lc,'idle','release')
+lc(lc,'idle','release')
 
 rawCapture = PiRGBArray(camera, size=(320, 240))
 
@@ -75,8 +75,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
     Min_VB,Min_VG,Min_VR = 0,0,0
     Max_VB,Max_VG,Max_VR = 255,228,255
         
-    Min_OH,Min_OS,Min_OV = 120,20,50
-    Max_OH,Max_OS,Max_OV = 185,95,125
+    Min_OH,Min_OS,Min_OV = 150,20,70
+    Max_OH,Max_OS,Max_OV = 170,110,120
     
     if Rescue_start == False:
         #########################################
@@ -184,7 +184,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if bx != 0 and motor_ENABLE == True:
             lineerror = bx - 170
             Mainloop.linetrace(Mainloop,lineerror)
-            print("From Main.py Black... obstacle:{}cm".format(dist))
+            #print("From Main.py Black... obstacle:{}cm".format(dist))
         if gx != 0 and bx != 0 and motor_ENABLE == True and green_ENABLE == True:
             turnerror = gx - bx
             Mainloop.greenturn(Mainloop,turnerror)
@@ -197,7 +197,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
             
               
-##        cv2.imshow("result",blur)
+        #cv2.imshow("result",blur)
         #cv2.imshow("Gmask",Gmask)
         #cv2.imshow("Gres",Gres)
         #cv2.imshow("Bmask",Bmask)
@@ -240,9 +240,9 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         vx,vy = int(VM['m10']/VM['m00']), int(VM['m01']/VM['m00'])
         
         # finding contour with maximum area and store it as best_cnt - Green Are
-        Omin_area = 1000 # Was 530 before
+        Omin_area = 1500 # Was 530 before
         Obest_cnt = 1
-        for Ocnt in Vcontours:
+        for Ocnt in Ocontours:
                 Oarea = cv2.contourArea(Ocnt)
                 if Oarea > Omin_area:
                         Omin_area = Oarea
@@ -253,20 +253,22 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
         
         # green dot where the middle line of the video feed is
-        if vx != 0 or vy != 0:
+        #if vx != 0 or vy != 0:
+        if vx != 0 and SearchPlatform == False:
             vx += 125
             cv2.circle(Oimage,(vx,vy),5,(255,0,0),-1)      # Blue Dot
-            print("Victim detected...")
+            print("Victim detected... dist:{} vx:{} vy:{}".format(dist,vx,vy))
+        if ox != 0 or oy != 0:
+            ox += 125
+            cv2.circle(Oimage,(ox,oy),5,(255,255,0),-1)
+            print("Platform detected... dist:{} ox:{} oy:{}".format(dist,ox,oy))
         
         cv2.imshow("Rescue",image)
+        cv2.imshow("Omask",Ores)
+        cv2.imshow("Vmask",VmaskInv)
         
-        distCal = 0
-        
-        for i in range(3):
-            distRaw = SR.value('distance')
-            distCal += distRaw
-        dist = distCal/3
-        print("In rescue... dist:{}".format(dist))
+        dist = SR.value('distance')
+        print("In rescue... dist:{} ox:{} vx:{} SearchPlatform:{}".format(dist,ox,vx,SearchPlatform))
             
         if vx != 0 and SearchPlatform == False:
             print("Initiallizing catchVictim Sequence... dist:{} \t ox:{}".format(dist,ox))
@@ -280,30 +282,39 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             # Controls the lifting mechanism in order to catch and lift the victim up
             dc(dc,0,0)
             lc(lc,'idle','catch')
-            print("From catchVictim... Catching the victim... dist:{}".format(dist))
+            print("From catchVictim... the victim catched... dist:{}".format(dist))
             time.sleep(1.5)
             lc(lc,'lift','catch')
-            print("From catchVictim... Lifting the victim...")
             time.sleep(1.5)
             dc(dc,-100,-100)
             time.sleep(1)
             dc(dc,0,0)
             SearchPlatform = True
+            print("From catchVictim... the victim lifted...")
+            
+        #dist = SR.value('distance')
+        #print("In rescue... dist:{} ox:{}".format(dist,ox))
         
         if ox != 0 and SearchPlatform == True:
             while dist > 9:
                 dc(dc,100,100)
                 dist = SR.value('distance')
-                print("Approaching Platform... dist:{}".format(dist))
+                print("Approaching Platform... dist:{} ox:{}".format(dist,ox))
             # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
             dc(dc,100,100)
             time.sleep(0.5)
+            cv2.imshow("Omask1",Omask)
             dc(dc,0,0)
-            
             lc(lc,'idle','release')
+            dc(dc,-100,-100)
+            time.sleep(0.5)
+            dc(dc,0,0)
+            print("Releasing the victim... Finishing...")
+##            cv2.destroyAllWindows()
             break
         
-        dc(dc,-60,60)
+        
+        dc(dc,-75,75)
         
 
     

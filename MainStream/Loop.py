@@ -50,7 +50,7 @@ class MainControl(object):
             elif Rspeed < -100:
                 Rspeed = -100
             #dist = SR.value('distance')
-            print("Left:{} \t Right:{} \t error:{} \t lasterror:{} \t integral:{} \t derivative:{} \t pidturn:{} ".format(Lspeed,Rspeed,error,lasterror,integral,derivative,pidturn,))
+            #print("Left:{} \t Right:{} \t error:{} \t lasterror:{} \t integral:{} \t derivative:{} \t pidturn:{} ".format(Lspeed,Rspeed,error,lasterror,integral,derivative,pidturn,))
             dc(dc,Lspeed,Rspeed)
         else:
             pass
