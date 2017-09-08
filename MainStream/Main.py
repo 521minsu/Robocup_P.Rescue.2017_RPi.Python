@@ -42,7 +42,7 @@ motor_ENABLE = True                   #
 #######################################
 green_ENABLE = True                   #
 #######################################
-waterTower_ENABLE = False             #
+waterTower_ENABLE = False            #
 WTLimit = 1                           #
 #######################################
 WTDone = 0
@@ -114,7 +114,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             
         # finding contour with maximum area and store it as best_cnt - Black Area
         # min_area = 1000
-        Bmin_area = 1000    
+        Bmin_area = 1500    
         Bbest_cnt = 1
         for Bcnt in Rcontours:
                 Barea = cv2.contourArea(Bcnt)
@@ -169,12 +169,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         rescue_detection = 0
         
     #============== Search Victim ===================
-        print("Threshold..:   gx:{} \t gy:{}\t bx:{} \t by:{}".format(gx,gy,bx,by))
+        print("Threshold..:   gx:{} \t gy:{}\t bx:{} \t by:{} \t dist:{}".format(gx,gy,bx,by,dist))
      
         if gx_low < gx < gx_high and bx == 0:
             print("Rescue starting")
-##            dc(dc,100,100)
-##            time.sleep(1)
+            dc(dc,100,100)
+            time.sleep(0.3)
             dc(dc,0,0)
             cc(cc,'up')
             time.sleep(1)
@@ -191,7 +191,8 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         if gx != 0 and bx != 0 and motor_ENABLE == True and green_ENABLE == True:
             turnerror = gx - bx
             Mainloop.greenturn(Mainloop,turnerror)
-        if waterTower_ENABLE == True and WTDone < WTLimit and dist < 30:
+        if waterTower_ENABLE == True and WTDone < WTLimit and dist < 35:
+            print("Initializing Water Tower...")
             dc(dc,0,0)
             dc(dc,100,-100)
             time.sleep(0.5)
@@ -199,6 +200,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             time.sleep(0.2)
             dc(dc,30,100)
             time.sleep(2)
+            print("_______________Finished Water Tower...")
             WTDone += 1
             #print("From Main.py WT... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
         #else:
@@ -309,10 +311,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 dist = SR.value('distance')
                 print("Approaching Platform... dist:{} ox:{}".format(dist,ox))
             # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
-##            dc(dc,100,100)
-##            time.sleep(0.5)
+            dc(dc,100,100)
+            time.sleep(0.3)
             dc(dc,0,0)
             lc(lc,'idle','release')
+            dc(dc,0,0)
+            time.sleep(1)
             dc(dc,-100,-100)
             time.sleep(0.5)
             dc(dc,0,0)
