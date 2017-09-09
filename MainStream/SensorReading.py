@@ -23,71 +23,12 @@ def value(sensor):
         if rawData != b'':
             rawrData = rawData.decode()
             senVal = rawrData.split(",")
-            irVal = int(senVal[0])
-            lCSCal = 0
-            rCSCal = 0
+            dist = int(senVal[0])
             
-            for i in range(10):
-                lCSRaw = int(senVal[1])
-                rCSRaw = int(senVal[2])
-                rCSRaw += 60
-                lCSCal += lCSRaw
-                rCSCal += rCSRaw
-            lCSVal = lCSCal/10
-            rCSVal = rCSCal/10
                 
-            Min_G,Max_G = 530,1000
-            
-            if irVal > 80:
-                irVal = 80
-                
-            if Min_G <= lCSVal < Max_G:
-                lCSColor = 'green'
-            else:
-                lCSColor = 'other'
-            if Min_G <= rCSVal < Max_G:
-                rCSColor = 'green'
-            else:
-                rCSColor = 'other'
-            
             if sensor == 'distance':
-                return irVal
-            elif sensor == 'left_CS':
-                return lCSColor
-            elif sensor == 'right_CS':
-                return rCSColor
-            elif sensor == 'left_CS_Raw':
-                return lCSVal
-            elif sensor == 'right_CS_Raw':
-                return rCSVal
-            
-##            print("Raw:{} \t Prox: {} \t Distance:{}".format(rawData,proxVal,irVal))
-##            print(rawData)
-##        sensorValue = int(rawrData)
-##        rawrData = struct.unpack("", rawData)
-##        sensorValue = (rawrData[0] << 8) | rawrData[1]
-##            time.sleep(0.2)
-        else:
+                return dist
             pass
     except:
         print("Passed an error")
         pass
-
-###########################
-# Debugging Purpose Only! #
-###########################
-##if __name__ == "__main__":
-##    while True:
-##        while ser.inWaiting()==0:
-##            pass
-##        rawData  = ser.readline().strip()
-##        if rawData != b'':
-##            rawrData = rawData.decode()
-##            senVal = rawrData.split(",")
-##            proxVal = int(senVal[0])
-##            irVal = int(senVal[1])
-##            
-##            if irVal > 80:
-##                irVal = 80
-##        print(rawData)
-        #print("Raw:{} \t Dist:{} \t Prox:{}".format(rawData,irVal,senVal))

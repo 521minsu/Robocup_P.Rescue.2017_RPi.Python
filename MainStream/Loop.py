@@ -17,7 +17,7 @@ lc = dc_motors.Motor.liftcontrol
 import SensorReading as SR
 import rescue
 
-battery = 20000
+battery = 10000
 
 def __init__():
     pass
@@ -25,20 +25,21 @@ def __init__():
 class MainControl(object):
     def linetrace(self,error):
         if battery == 20000:
-            mSpeed = 60
-            Kp,Ki,Kd = 80,2,0    # Old:120,10,0 
+            mSpeed = 100
+            Kp,Ki,Kd = 90,10,0    # New:90,10,0  # Old:120,10,0 
             integral,derivative,lasterror = 0,0,0
             pidturn = 0
         elif battery == 10000:
             mSpeed = 100    # 20000mAh - 100
-            Kp,Ki,Kd = 80,2,0    # Old:120,10,0 # 20000mAh 80,10,0
+            Kp,Ki,Kd = 110,15,3# New: @@,@@,0  # Old:80,2,0 
             integral,derivative,lasterror = 0,0,0
             pidturn = 0
-        if error != 9000:
+        if error != 1000:
             integral += error
             derivative = error - lasterror
             pidturn = Kp*error + Ki*integral + Kd*derivative
             pidturn = pidturn/100
+            print(pidturn)
             lasterror = error
             Lspeed,Rspeed = mSpeed+pidturn, mSpeed-pidturn
             if Lspeed > 100:

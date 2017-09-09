@@ -24,7 +24,7 @@ cc = dc_motors.Motor.cameracontrol
 camera = PiCamera()
 camera.resolution = (320, 240)
 camera.framerate = 50
-camera.hflip = False
+camera.hflip = True
 
 rawCapture = PiRGBArray(camera, size=(320, 240))
  
@@ -61,8 +61,7 @@ cv2.createTrackbar('Camera Lift', 'Camera',0,1,nothing)
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
         # image feeds to apply masks on
         original = frame.array
-        hflip = cv2.flip(original,0)
-        image = cv2.flip(hflip,1)
+        image = cv2.flip(original,0)
         kimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         Gimage = kimage
         # blurred image to show detection status
