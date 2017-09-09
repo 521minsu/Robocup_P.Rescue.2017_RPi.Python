@@ -5,6 +5,7 @@
 SharpIR SharpIR(ir, model);
 
 int dist = 0, distsum = 0, distcal;
+int customprox = 0, proxVal = 0;
 
 void setup() {
   // put your setup code here, to run once:
@@ -13,10 +14,13 @@ void setup() {
 }
 
 void loop() {
-  int dist = SharpIR.distance();  // this returns the distance to the object you're measuring
-  int customprox = analogRead(customproxPin);
+  dist = SharpIR.distance();  // this returns the distance to the object you're measuring
+  customprox = analogRead(customproxPin);
+  
+  if (customprox > 995) proxVal = 0;
+  else proxVal = 1;
   
   Serial.print(dist);
   Serial.print(" , ");
-  Serial.println(customprox);
+  Serial.println(proxVal);
 }
