@@ -7,7 +7,7 @@
 # ---------------------------------- #
 #  Author: Minsu Kim                 #
 #  Email : 521minsu@gmail.com        #
-#  Last Update: 08.08.17             #
+#  Last Update: 10.09.17             #
 ######################################
 
 ##############################################
@@ -30,6 +30,7 @@ import rescue
 first = False
 Rescue_start = False
 SearchPlatform = False
+Victimloc = 0
 
 import dc_motors
 dc = dc_motors.Motor.drivingcontrol
@@ -68,16 +69,16 @@ try:
     for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
         #Make sure You are putting calibrated values in
         Min_BB,Min_BG,Min_BR = 0,0,0
-        Max_BB,Max_BG,Max_BR = 255,50,255
+        Max_BB,Max_BG,Max_BR = 255,60,255  #255,50,255
             
-        Min_GH,Min_GS,Min_GV = 21,63,54
-        Max_GH,Max_GS,Max_GV = 80,196,197
+        Min_GH,Min_GS,Min_GV = 20,70,80       #21,63,54
+        Max_GH,Max_GS,Max_GV = 100,165,195    #80,196,197
         
         Min_VB,Min_VG,Min_VR = 0,0,0
-        Max_VB,Max_VG,Max_VR = 255,228,255
+        Max_VB,Max_VG,Max_VR = 255,255,220   #255,228,255
             
-        Min_OH,Min_OS,Min_OV = 120,60,60
-        Max_OH,Max_OS,Max_OV = 180,110,150
+        Min_OH,Min_OS,Min_OV = 150,80,100    #120,60,60
+        Max_OH,Max_OS,Max_OV = 180,255,200   #180,110,150
         
         
         # image from the Picam
@@ -260,7 +261,7 @@ try:
             
             dist = SR.value('distance')
             print("In rescue... dist:{} ox:{} vx:{} SearchPlatform:{}".format(dist,ox,vx,SearchPlatform))
-                
+
             if vx != 0 and SearchPlatform == False:
                 print("Initiallizing catchVictim Sequence... dist:{} \t ox:{}".format(dist,ox))
                 while dist > 5:
@@ -293,7 +294,7 @@ try:
                 first = False
             
             if ox != 0 and SearchPlatform == True:
-                while dist > 7:
+                while dist > 5:
                     dc(dc,100,100)
                     dist = SR.value('distance')
                     print("Approaching Platform... dist:{} ox:{}".format(dist,ox))
@@ -313,10 +314,16 @@ try:
                 cv2.destroyAllWindows()
                 break
             
-            if SearchPlatform == True:
-                dc(dc,-65,65)
-            else:
-                dc(dc,-65,65)
+            if SearchPlatform == False:
+                if Victimloc == 0:
+                    dc(dc,-65,65)
+                elif Victimloc == 1:
+                    dc(dc,65,-65)
+            elif SearchPlatform == True:
+                if Victimloc == 0:
+                    dc(dc,65,-65)
+                elif Victimloc == 1:
+                    dc(dc,-65,65)
             
 
         

@@ -31,7 +31,7 @@ class MainControl(object):
             pidturn = 0
         elif battery == 10000:
             mSpeed = 100    # 20000mAh - 100
-            Kp,Ki,Kd = 110,15,3# New: @@,@@,0  # Old:80,2,0 
+            Kp,Ki,Kd = 80,17,20 # New: @@,@@,0  # Old:80,2,0 
             integral,derivative,lasterror = 0,0,0
             pidturn = 0
         if error != 1000:
