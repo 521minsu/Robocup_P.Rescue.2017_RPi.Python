@@ -25,7 +25,6 @@ import numpy as np
 #Loop and program related modules
 from Loop import MainControl as Mainloop
 import SensorReading as SR
-import rescue
 
 first = False
 Rescue_start = False

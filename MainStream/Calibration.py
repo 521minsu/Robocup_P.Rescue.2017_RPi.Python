@@ -62,8 +62,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         # image feeds to apply masks on
         original = frame.array
         image = cv2.flip(original,0)
-        kimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
-        Gimage = kimage
+        Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         # blurred image to show detection status
         blur = cv2.blur(image, (3,3))
         Bblur = cv2.blur(image, (3,3))
