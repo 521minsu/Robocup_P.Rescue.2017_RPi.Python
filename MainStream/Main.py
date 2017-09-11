@@ -40,9 +40,11 @@ cc = dc_motors.Motor.cameracontrol
 #######################################
 motor_ENABLE = True                   #
 #######################################
+backup_ENABLE = True                 #
+#######################################
 green_ENABLE = True                   #
 #######################################
-waterTower_ENABLE = False              #
+waterTower_ENABLE = False             #
 WTLimit = 1                           #
 #######################################
 WTDone = 0
@@ -68,7 +70,7 @@ try:
     for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
         #Make sure You are putting calibrated values in
         Min_BB,Min_BG,Min_BR = 0,0,0
-        Max_BB,Max_BG,Max_BR = 255,60,255  #255,50,255
+        Max_BB,Max_BG,Max_BR = 255,60,255     #255,50,255
             
         Min_GH,Min_GS,Min_GV = 20,70,80       #21,63,54
         Max_GH,Max_GS,Max_GV = 100,165,195    #80,196,197
@@ -103,10 +105,12 @@ try:
             Gmask = cv2.inRange(Gimage,Glower,Gupper)
             Bmask = cv2.inRange(image,Blower,Bupper)
 
-            Bres = Bmask[20:90]
+            Bres = Bmask[30:90]
+            BBres = Bmask[150:210]
             Gres = Gmask[150:210]
             
             Bres, Rcontours,Rhierarchy = cv2.findContours(Bres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+            BBres, BRcontours,BRhierarchy = cv2.findContours(BBres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             Gres, Gcontours,Ghierarchy = cv2.findContours(Gres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
                
             # finding contour with maximum area and store it as best_cnt - Black Area
@@ -123,6 +127,20 @@ try:
             # cx, cy = black line following red dot
             bx,by = int(BM['m10']/BM['m00']), int(BM['m01']/BM['m00'])
             
+            # finding contour with maximum area and store it as best_cnt - Black Area
+            # min_area = 1000
+            BBmin_area = 1500    
+            BBbest_cnt = 1
+            for BBcnt in BRcontours:
+                    BBarea = cv2.contourArea(BBcnt)
+                    if BBarea > BBmin_area:
+                            BBmin_area = BBarea
+                            BBbest_cnt = BBcnt
+            # finding centroids of best_cnt and draw a circle there
+            BBM = cv2.moments(BBbest_cnt)
+            # cx, cy = black line following red dot
+            bbx,bby = int(BBM['m10']/BBM['m00']), int(BBM['m01']/BBM['m00'])
+            
             # finding contour with maximum area and store it as best_cnt - Green Area
             Gmin_area = 1000 # Was 530 before
             Gbest_cnt = 1
@@ -138,11 +156,14 @@ try:
             
             # green dot where the middle line of the video feed is
             if gx != 0:
-                gy = gy + 150
+                gy += 150
                 cv2.circle(blur,(gx,gy),5,(255,0,0),-1)      # Blue Dot
             if bx != 0:
-                by = by + 30
+                by += 30
                 cv2.circle(blur,(bx,by),5,(0,0,255),-1)      # Red Dot
+            if bbx != 0:
+                bby += 150
+                cv2.circle(blur,(bbx,bby),5,(0,0,255),-1)      # Red Dot
             cv2.circle(blur,(170,160),5,(0,255,0),-1)    # Green Dot
             lineerror,turnerror = 1000,1000
             
@@ -151,7 +172,8 @@ try:
             rescue_detection = 0
             
         #============== Search Victim ===================
-            print("Threshold:   gx:{} \t gy:{}\t bx:{} \t by:{} \t dist:{}".format(gx,gy,bx,by,dist))
+            error = bx - 160
+            print("Threshold:  error:{} gx:{} \t gy:{}\t bx:{} \t by:{} \t dist:{}".format(error,gx,gy,bx,by,dist))
          
             if gx_low < gx < gx_high and bx == 0:
                 print("Rescue starting")
@@ -165,36 +187,26 @@ try:
 
         #===================================================
                     
-                    
-            if bx != 0 and motor_ENABLE == True:
-                lineerror = bx - 160  #Put 170 instead of 160 if using 20000mAh battery
-                Mainloop.linetrace(Mainloop,lineerror)
-                #print("From Main.py Black... obstacle:{}cm".format(dist))
+            # Main Line Following Call
+            if bbx != 0 and motor_ENABLE == True:  
+                Kp,Ki,Kd =90,20,5
+                lineerror = bx - bbx
+##                if bx != 0:
+##                    diff = bbx - bx
+##                    Mainloop.linetrace(Mainloop,lineerror,Kp,Ki,Kd,0)
+##                    print("Front")
+##                else:
+##                    print("Back")
+                Mainloop.linetrace(Mainloop,lineerror,Kp,Ki,Kd)
             if gx != 0 and bx != 0 and motor_ENABLE == True and green_ENABLE == True:
                 turnerror = gx - bx
                 Mainloop.greenturn(Mainloop,turnerror)
             if waterTower_ENABLE == True and WTDone < WTLimit and dist < 20:
                 print("Initializing Water Tower...")
-                dc(dc,0,0)
-                dc(dc,100,-100)
-                time.sleep(0.5)
-                dc(dc,100,100)
-                time.sleep(0.2)
-                dc(dc,20,100)
-                time.sleep(2)
-                print("_______________Finished Water Tower...")
-                WTDone += 1
-                #print("From Main.py WT... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t obstacle:{}cm".format(lineerror,bx,by,gx,gy,dist))
-            #else:
-                #print("From Main.py else... error:{} \t bx:{} \t by:{} \t gx:{} \t gy:{} \t distance:{}cm".format(lineerror,bx,by,gx,gy,dist))
-            
+                WaterTowerRun()
                 
                   
             cv2.imshow("result",blur)
-            #cv2.imshow("Gmask",Gmask)
-            #cv2.imshow("Gres",Gres)
-            #cv2.imshow("Bmask",Bmask)
-            #cv2.imshow("Bres",res)
             
         if Rescue_start == True:
             Vimage = image
@@ -253,23 +265,23 @@ try:
                 cv2.circle(Oimage,(ox,oy),5,(255,255,0),-1)
                 print("Platform detected... dist:{} ox:{} oy:{}".format(dist,ox,oy))
             
-            cv2.imshow("Rescue",image)
-            cv2.imshow("Omask",Omask)
-            cv2.imshow("Ores",Ores)
-            cv2.imshow("Vmask",VmaskInv)
+##            cv2.imshow("Rescue",image)
+##            cv2.imshow("Omask",Omask)
+##            cv2.imshow("Ores",Ores)
+##            cv2.imshow("Vmask",VmaskInv)
             
             dist = SR.value('distance')
             print("In rescue... dist:{} ox:{} vx:{} SearchPlatform:{}".format(dist,ox,vx,SearchPlatform))
 
             if vx != 0 and SearchPlatform == False:
                 print("Initiallizing catchVictim Sequence... dist:{} \t ox:{}".format(dist,ox))
-                while dist > 5:
+                while dist > 6:
                     dc(dc,100,100)
                     dist = SR.value('distance')
                     print("Approaching Victim... dist:{}".format(dist))
                 # Travels forward for 0.5 more seconds to make sure it is possible to catch the victim
-                dc(dc,100,100)
-                time.sleep(0.5)
+##                dc(dc,100,100)
+##                time.sleep(0.2)
                 # Controls the lifting mechanism in order to catch and lift the victim up
                 dc(dc,0,0)
                 lc(lc,'idle','catch')
@@ -278,7 +290,7 @@ try:
                 lc(lc,'lift','catch')
                 time.sleep(1.5)
                 dc(dc,-100,-100)
-                time.sleep(1)
+                time.sleep(0.5)
                 dc(dc,0,0)
                 first = True
                 SearchPlatform = True
@@ -293,7 +305,7 @@ try:
                 first = False
             
             if ox != 0 and SearchPlatform == True:
-                while dist > 5:
+                while dist > 6:
                     dc(dc,100,100)
                     dist = SR.value('distance')
                     print("Approaching Platform... dist:{} ox:{}".format(dist,ox))
@@ -315,14 +327,14 @@ try:
             
             if SearchPlatform == False:
                 if Victimloc == 0:
-                    dc(dc,-65,65)
+                    dc(dc,-80,80)
                 elif Victimloc == 1:
-                    dc(dc,65,-65)
+                    dc(dc,80,-80)
             elif SearchPlatform == True:
                 if Victimloc == 0:
-                    dc(dc,65,-65)
+                    dc(dc,80,-80)
                 elif Victimloc == 1:
-                    dc(dc,-65,65)
+                    dc(dc,-80,80)
             
 
         
@@ -334,3 +346,14 @@ try:
 except KeyboardInterrupt:
     dc_motors.Motor.cleanup(dc_motors)
     cv2.destroyAllWindows()
+    
+def WaterTowerRun():
+    dc(dc,0,0)
+    dc(dc,100,-100)
+    time.sleep(0.5)
+    dc(dc,100,100)
+    time.sleep(0.2)
+    dc(dc,20,100)
+    time.sleep(2)
+    print("_______________Finished Water Tower...")
+    WTDone += 1

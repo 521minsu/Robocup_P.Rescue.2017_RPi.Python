@@ -18,8 +18,8 @@ GPIO.setmode(GPIO.BOARD)
 GPIO.setwarnings(False)
 
 right_pwm_pin = 32 
-right_in1_pin = 7
-right_in2_pin = 11
+right_in1_pin = 11
+right_in2_pin = 7
 left_pwm_pin = 33
 left_in1_pin = 16
 left_in2_pin = 18
@@ -65,24 +65,24 @@ def __init__ ():
 class Motor(object):
     def drivingcontrol(self, lms, rms):        
         if lms > 0:
-            GPIO.output(left_in1_pin, True)
-            GPIO.output(left_in2_pin, False)
-            left_dmotor_p.ChangeDutyCycle(lms)
-        elif lms < 0:
             GPIO.output(left_in1_pin, False)
             GPIO.output(left_in2_pin, True)
+            left_dmotor_p.ChangeDutyCycle(lms)
+        elif lms < 0:
+            GPIO.output(left_in1_pin, True)
+            GPIO.output(left_in2_pin, False)
             left_dmotor_p.ChangeDutyCycle(abs(lms))
         elif lms == 0:
             GPIO.output(left_in1_pin, False)
             GPIO.output(left_in2_pin, False)
             left_dmotor_p.ChangeDutyCycle(0)
         if rms > 0:
-            GPIO.output(right_in1_pin, True)
-            GPIO.output(right_in2_pin, False)
-            right_dmotor_p.ChangeDutyCycle(rms)
-        elif rms < 0:
             GPIO.output(right_in1_pin, False)
             GPIO.output(right_in2_pin, True)
+            right_dmotor_p.ChangeDutyCycle(rms)
+        elif rms < 0:
+            GPIO.output(right_in1_pin, True)
+            GPIO.output(right_in2_pin, False)
             right_dmotor_p.ChangeDutyCycle(abs(rms))
         elif rms == 0:
             GPIO.output(right_in1_pin, False)
@@ -144,3 +144,4 @@ class Motor(object):
         GPIO.output(left_in1_pin, False)
         GPIO.output(left_in2_pin, False)
         GPIO.cleanup()
+

@@ -106,13 +106,13 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
         # Apply vision limiters (Forced Mask over mask that is created by detecting color)
         res = Bmask[30:90]
+        Bres = Bmask[150:210]
         Gres = Gmask[150:210]
-        Gtest = Gmask[:,125:195]
         
         # find contours in the threshold image
         res, Rcontours,Rhierarchy = cv2.findContours(res,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         Gres, GRcontours,GRhierarchy = cv2.findContours(Gres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
-        Gtest, Gcontours,Ghierarchy = cv2.findContours(Gtest,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
+        Bres, BRcontours,BRhierarchy = cv2.findContours(Bres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         
         # finding contour with maximum area and store it as best_cnt - Black Line (Mask Applied)
         min_area = 0
@@ -127,6 +127,18 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         # cx, cy = black line following red dot
         cx,cy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
         
+        # finding contour with maximum area and store it as best_cnt - Black Line (Mask Applied)
+        min_area = 0
+        best_cnt = 1
+        for cnt in BRcontours:
+                area = cv2.contourArea(cnt)
+                if area > min_area:
+                        min_area = area
+                        best_cnt = cnt
+        # finding centroids of best_cnt and draw a circle there
+        M = cv2.moments(best_cnt)
+        # cx, cy = black line following red dot
+        bx,by = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
         
         # finding contour with maximum area and store it as best_cnt - Green Patch (Mask Applied)
         min_area = Min_GA
@@ -140,31 +152,17 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         M = cv2.moments(best_cnt)
         gx,gy = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
         
-        
-        # finding contour with maximum area and store it as best_cnt - Green Patch (Mask Applied)
-        min_area = Min_GA
-        best_cnt = 1
-        for cnt in Gcontours:
-                area = cv2.contourArea(cnt)
-                if area > min_area:
-                        min_area = area
-                        best_cnt = cnt
-        # finding centroids of best_cnt and draw a circle there
-        M = cv2.moments(best_cnt)
-        gtx,gty = int(M['m10']/M['m00']), int(M['m01']/M['m00'])
-        
         # Mapping dots on image based on Black mask
         if cx != 0 or cy != 0:
             cv2.circle(Eblur,(cx,cy),5,(0,0,255),-1)
             cv2.circle(Bblur,(cx,cy),5,(0,0,255),-1)
+        if bx != 0 or by != 0:
+            cv2.circle(Eblur,(bx,by),5,(0,0,255),-1)
+            cv2.circle(Bblur,(bx,by),5,(0,0,255),-1)
         # Mapping dots on image based on Green mask
         if gx != 0 or gy != 0:
             cv2.circle(Eblur,(gx,gy),5,(0,255,255),-1)
             cv2.circle(Gblur,(gx,gy),5,(0,255,255),-1)
-        if gtx != 0 or gty != 0:
-            gtx += 135
-            cv2.circle(Eblur,(gtx,gty),5,(255,0,255),-1)
-            cv2.circle(Gblur,(gtx,gty),5,(255,0,255),-1)
         # Mapping center dot on image
         cv2.circle(Eblur,(170,160),5,(0,255,0),-1)
         

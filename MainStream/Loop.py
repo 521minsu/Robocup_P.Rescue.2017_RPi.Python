@@ -7,7 +7,7 @@
 # ---------------------------------- #
 #  Author: Minsu Kim                 #
 #  Email : 521minsu@gmail.com        #
-#  Last Update: 08.08.17             #
+#  Last Update: 10.09.17             #
 ######################################
 
 import time
@@ -15,33 +15,42 @@ import dc_motors
 dc = dc_motors.Motor.drivingcontrol
 lc = dc_motors.Motor.liftcontrol
 import SensorReading as SR
-import rescue
-
-battery = 10000
 
 def __init__():
     pass
 
 class MainControl(object):
-    def linetrace(self,error):
-        if battery == 20000:
-            mSpeed = 100
-            Kp,Ki,Kd = 90,10,0    # New:90,10,0  # Old:120,10,0 
-            integral,derivative,lasterror = 0,0,0
-            pidturn = 0
-        elif battery == 10000:
-            mSpeed = 100    # 20000mAh - 100
-            Kp,Ki,Kd = 80,17,20 # New: @@,@@,0  # Old:80,2,0 
-            integral,derivative,lasterror = 0,0,0
-            pidturn = 0
+    def linetrace(self,error,Kp,Ki,Kd):
+        mSpeed = 100
+        integral,derivative,lasterror = 0,0,0
+        pidturn = 0
         if error != 1000:
-            integral += error
-            derivative = error - lasterror
-            pidturn = Kp*error + Ki*integral + Kd*derivative
-            pidturn = pidturn/100
-            print(pidturn)
-            lasterror = error
+##            integral += error
+##            derivative = error - lasterror
+##            pidturn = Kp*error + Ki*integral + Kd*derivative
+##            pidturn = pidturn/100
+##            lasterror = error
+            if error < 0:
+                pidturn = (-200/140**2)*error**2
+            elif error > 0:
+                pidturn = (200/140**2)*error**2
+    
+##        if error != 1000:
+##            mSpeed = 100
+##            pidturn = (10/7)*error
             Lspeed,Rspeed = mSpeed+pidturn, mSpeed-pidturn
+            if 35 > Lspeed >= 0:
+                Lspeed = -10
+                print("(POS) Lspeed calibrated to.... {}".format(Lspeed))
+            elif 0 > Lspeed > -35:
+                Lspeed -= 10
+                print("(NEG) Lspeed calibrated to.... {}".format(Lspeed))
+            if 35 > Rspeed >= 0:
+                Rspeed = -10
+                print("(POS) Rspeed calibrated to.... {}".format(Rspeed))
+            elif 0 > Rspeed > -35:
+                Rspeed -= 10
+                print("(NEG) Rspeed calibrated to.... {}".format(Rspeed))
             if Lspeed > 100:
                 Lspeed = 100
             elif Lspeed < -100:
@@ -50,21 +59,15 @@ class MainControl(object):
                 Rspeed = 100
             elif Rspeed < -100:
                 Rspeed = -100
-            #dist = SR.value('distance')
-            #print("Left:{} \t Right:{} \t error:{} \t lasterror:{} \t integral:{} \t derivative:{} \t pidturn:{} ".format(Lspeed,Rspeed,error,lasterror,integral,derivative,pidturn,))
+            print("ERROR:{} \t pidturn:{} Lspeed:{} \t Rspeed:{}".format(error,pidturn,Lspeed,Rspeed))
             dc(dc,Lspeed,Rspeed)
         else:
             pass
     
     def greenturn(self,turnerror):
-        if battery == 20000:
-            straight = 0.65
-            right = 1
-            left = 0.95
-        elif battery == 10000:
-            straight = 0.65
-            right = 0.9
-            left = 1
+        straight = 0.8    #0.65 before
+        right = 0.9
+        left = 1
         if turnerror != 0:
             dc(dc,0,0)
             dc(dc,100,100)
@@ -72,13 +75,13 @@ class MainControl(object):
             dc(dc,0,0)
         if turnerror > 0: # turn right
             dc(dc,100,-100)
-            time.sleep(right)    #0.88 - 20000mAh
+            time.sleep(right)
             dc(dc,0,0)
             dc(dc,-100,100)
             print("turned right")
         elif turnerror < 0: # turn left
             dc(dc,-100,100)
-            time.sleep(left)    # 1 - 20000mAh
+            time.sleep(left)
             dc(dc,0,0)
             dc(dc,100,-100)
             print("turned left")
