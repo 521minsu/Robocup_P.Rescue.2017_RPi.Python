@@ -40,7 +40,7 @@ cc = dc_motors.Motor.cameracontrol
 #######################################
 motor_ENABLE = True                   #
 #######################################
-backup_ENABLE = True                 #
+array_ENABLE = True                 #
 #######################################
 green_ENABLE = True                   #
 #######################################
@@ -49,12 +49,12 @@ WTLimit = 1                           #
 #######################################
 WTDone = 0
 
-bx,by,gx,gy,rx,ry = 0,0,0,0,0,0
+bx,bx1,bx2,by,gx,gy,rx,ry = 0,0,0,0,0,0,0,0
 gx_high,gx_low = 200,150
 
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
-camera.resolution = (320, 240)
+camera.resolution = (128, 80)
 camera.framerate = 50
 camera.hflip = True
 
@@ -62,24 +62,20 @@ cc(cc,'down')
 dc(dc,0,0)
 lc(lc,'idle','release')
 
-rawCapture = PiRGBArray(camera, size=(320, 240))
+rawCapture = PiRGBArray(camera, size=(128, 80))
 
 # allow the camera to warmup
 time.sleep(1)
 try:
     for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
         #Make sure You are putting calibrated values in
-        Min_BB,Min_BG,Min_BR = 0,0,0
-        Max_BB,Max_BG,Max_BR = 255,60,255     #255,50,255
-            
-        Min_GH,Min_GS,Min_GV = 20,70,80       #21,63,54
-        Max_GH,Max_GS,Max_GV = 100,165,195    #80,196,197
+        Min_BB,Min_BG,Min_BR,Max_BB,Max_BG,Max_BR = 0,0,0,255,50,255
         
-        Min_VB,Min_VG,Min_VR = 0,0,0
-        Max_VB,Max_VG,Max_VR = 255,255,220   #255,228,255
-            
-        Min_OH,Min_OS,Min_OV = 150,80,100    #120,60,60
-        Max_OH,Max_OS,Max_OV = 180,255,200   #180,110,150
+        Min_GH,Min_GS,Min_GV,Max_GH,Max_GS,Max_GV = 40,30,60,80,170,190       #21,63,54        
+        
+        Min_VB,Min_VG,Min_VR,Max_VB,Max_VG,Max_VR = 0,0,0,255,245,255
+        
+        Min_OH,Min_OS,Min_OV,Max_OH,Max_OS,Max_OV = 150,110,110,195,195,195    #120,60,60
         
         
         # image from the Picam
@@ -105,9 +101,9 @@ try:
             Gmask = cv2.inRange(Gimage,Glower,Gupper)
             Bmask = cv2.inRange(image,Blower,Bupper)
 
-            Bres = Bmask[30:90]
-            BBres = Bmask[150:210]
-            Gres = Gmask[150:210]
+            Bres = Bmask[10:30]
+            BBres = Bmask[50:70]
+            Gres = Gmask[50:70]
             
             Bres, Rcontours,Rhierarchy = cv2.findContours(Bres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             BBres, BRcontours,BRhierarchy = cv2.findContours(BBres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -115,7 +111,7 @@ try:
                
             # finding contour with maximum area and store it as best_cnt - Black Area
             # min_area = 1000
-            Bmin_area = 1500    
+            Bmin_area = 300    
             Bbest_cnt = 1
             for Bcnt in Rcontours:
                     Barea = cv2.contourArea(Bcnt)
@@ -129,7 +125,7 @@ try:
             
             # finding contour with maximum area and store it as best_cnt - Black Area
             # min_area = 1000
-            BBmin_area = 1500    
+            BBmin_area = 300    
             BBbest_cnt = 1
             for BBcnt in BRcontours:
                     BBarea = cv2.contourArea(BBcnt)
@@ -142,7 +138,7 @@ try:
             bbx,bby = int(BBM['m10']/BBM['m00']), int(BBM['m01']/BBM['m00'])
             
             # finding contour with maximum area and store it as best_cnt - Green Area
-            Gmin_area = 1000 # Was 530 before
+            Gmin_area = 100 # Was 530 before
             Gbest_cnt = 1
             for Gcnt in Gcontours:
                     Garea = cv2.contourArea(Gcnt)
@@ -156,13 +152,13 @@ try:
             
             # green dot where the middle line of the video feed is
             if gx != 0:
-                gy += 150
+                gy += 50
                 cv2.circle(blur,(gx,gy),5,(255,0,0),-1)      # Blue Dot
             if bx != 0:
-                by += 30
+                by += 10
                 cv2.circle(blur,(bx,by),5,(0,0,255),-1)      # Red Dot
             if bbx != 0:
-                bby += 150
+                bby += 50
                 cv2.circle(blur,(bbx,bby),5,(0,0,255),-1)      # Red Dot
             cv2.circle(blur,(170,160),5,(0,255,0),-1)    # Green Dot
             lineerror,turnerror = 1000,1000
@@ -172,12 +168,12 @@ try:
             rescue_detection = 0
             
         #============== Search Victim ===================
-            error = bx - 160
-            print("Threshold:  error:{} gx:{} \t gy:{}\t bx:{} \t by:{} \t dist:{}".format(error,gx,gy,bx,by,dist))
+            error = bx - bbx
+            print("Threshold:  error:{} gx:{} \t gy:{}\t bx:{} \t bbx:{} \t dist:{}".format(error,gx,gy,bx,bbx,dist))
          
             if gx_low < gx < gx_high and bx == 0:
                 print("Rescue starting")
-                dc(dc,100,100)
+                dc(dc,80,80)
                 time.sleep(0.3)
                 dc(dc,0,0)
                 cc(cc,'up')
@@ -187,19 +183,29 @@ try:
 
         #===================================================
                     
-            # Main Line Following Call
-            if bbx != 0 and motor_ENABLE == True:  
-                Kp,Ki,Kd =90,20,5
-                lineerror = bx - bbx
+##            if gx == 0:
 ##                if bx != 0:
-##                    diff = bbx - bx
-##                    Mainloop.linetrace(Mainloop,lineerror,Kp,Ki,Kd,0)
-##                    print("Front")
-##                else:
-##                    print("Back")
-                Mainloop.linetrace(Mainloop,lineerror,Kp,Ki,Kd)
-            if gx != 0 and bx != 0 and motor_ENABLE == True and green_ENABLE == True:
-                turnerror = gx - bx
+##                    bx2 = bx1
+##                    bx1 = bx
+##                    print("line dots check bx1:{} \t bx2:{}".format(bx1,bx2))
+##                elif bx == 0:
+##                    bxdiff = bx1 - bx2
+##                    bx = bx1 + bxdiff
+##                    # excute the calibrated - newly added
+####                    Caliberror = bx - 160
+####                    print("Calibrated bx:{} \t Caliberror:{} \t bx1:{} \t bx2:{}".format(bx,Caliberror,bx1,bx2))
+##                    startTime = round(time.time())
+##                    #Mainloop.linetrace(Mainloop,Caliberror,Kp,Ki,Kd,startTime)
+            if bx != 0 and motor_ENABLE == True:  
+                Kp,Ki,Kd = 47,15,10
+                #lineerror = bbx - 160
+                lineerror = bx - 160
+                startTime = round(time.time())
+                Mainloop.linetrace(Mainloop,lineerror,Kp,Ki,Kd,startTime)
+            elif bx == 0 and array_ENABLE == True and motor_ENABLE == True:
+                Mainloop.noblack()
+            if gx != 0 and bbx != 0 and motor_ENABLE == True and green_ENABLE == True:
+                turnerror = gx - bbx
                 Mainloop.greenturn(Mainloop,turnerror)
             if waterTower_ENABLE == True and WTDone < WTLimit and dist < 20:
                 print("Initializing Water Tower...")
@@ -221,16 +227,16 @@ try:
             # Pure Masked image without any limits on its vision
             Vmask = cv2.inRange(Vimage,Vlower,Vupper)
             thresh,VmaskInv = cv2.threshold(Vmask,127,255,cv2.THRESH_BINARY_INV)
-            Vres = VmaskInv[:,135:185]
+            Vres = VmaskInv[:,30:50]
 
             Omask = cv2.inRange(Oimage,Olower,Oupper)
-            Ores = Omask[:,145:175]
+            Ores = Omask[:,30:50]
             
             Vres, Vcontours,Vhierarchy = cv2.findContours(Vres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             Ores, Ocontours,Ohierarchy = cv2.findContours(Ores,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
             
             # finding contour with maximum area and store it as best_cnt - Green Area
-            Vmin_area = 10 # Was 530 before
+            Vmin_area = 3 # Was 530 before
             Vbest_cnt = 1
             for Vcnt in Vcontours:
                     Varea = cv2.contourArea(Vcnt)
@@ -241,8 +247,8 @@ try:
             VM = cv2.moments(Vbest_cnt)
             vx,vy = int(VM['m10']/VM['m00']), int(VM['m01']/VM['m00'])
             
-            # finding contour with maximum area and store it as best_cnt - Green Are
-            Omin_area = 1000 # Was 530 before
+            # finding contour with maximum area and store it as best_cnt - Orange Are
+            Omin_area = 300 # Was 530 before
             Obest_cnt = 1
             for Ocnt in Ocontours:
                     Oarea = cv2.contourArea(Ocnt)
@@ -253,15 +259,12 @@ try:
             OM = cv2.moments(Obest_cnt)
             ox,oy = int(OM['m10']/OM['m00']), int(OM['m01']/OM['m00'])
             
-            
-            # green dot where the middle line of the video feed is
-            #if vx != 0 or vy != 0:
             if vx != 0 and SearchPlatform == False:
-                vx += 125
+                vx += 30
                 cv2.circle(Oimage,(vx,vy),5,(255,0,0),-1)      # Blue Dot
                 print("Victim detected... dist:{} vx:{} vy:{}".format(dist,vx,vy))
             if ox != 0 or oy != 0:
-                ox += 125
+                ox += 30
                 cv2.circle(Oimage,(ox,oy),5,(255,255,0),-1)
                 print("Platform detected... dist:{} ox:{} oy:{}".format(dist,ox,oy))
             

@@ -99,7 +99,7 @@ class Motor(object):
             GPIO.output(lift_in1_pin, False)
             GPIO.output(lift_in2_pin, True)
             GPIO.output(lift_pwm_pin, True)
-            time.sleep(0.75)
+            time.sleep(1.5)
             GPIO.output(lift_in1_pin, False)
             GPIO.output(lift_in2_pin, False)
             GPIO.output(lift_pwm_pin, False)

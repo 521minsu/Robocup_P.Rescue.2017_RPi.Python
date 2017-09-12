@@ -24,10 +24,13 @@ def value(sensor):
             rawrData = rawData.decode()
             senVal = rawrData.split(",")
             dist = int(senVal[0])
+            array = int(senVal[1])
             
                 
             if sensor == 'distance':
                 return dist
+            elif sensor == 'IRArray':
+                return array
             pass
     except:
         print("Passed an error")

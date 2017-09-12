@@ -20,13 +20,22 @@ import numpy as np
 import dc_motors
 cc = dc_motors.Motor.cameracontrol
 
+resolution = 80
+
 # initialize the camera and grab a reference to the raw camera capture
 camera = PiCamera()
-camera.resolution = (320, 240)
 camera.framerate = 50
 camera.hflip = True
 
-rawCapture = PiRGBArray(camera, size=(320, 240))
+if resolution == 320:
+    camera.resolution = (320, 240)
+    rawCapture = PiRGBArray(camera, size=(320, 240))
+elif resolution == 144:
+    camera.resolution = (256, 144)
+    rawCapture = PiRGBArray(camera, size=(256, 144))
+elif resolution == 80:
+    camera.resolution = (128, 80)
+    rawCapture = PiRGBArray(camera, size=(128, 80))
  
 # allow the camera to warmup
 time.sleep(0.1)
@@ -46,6 +55,12 @@ cv2.createTrackbar('Min R','Black Cal',0,255,nothing)
 cv2.createTrackbar('Max B','Black Cal',0,255,nothing)
 cv2.createTrackbar('Max G','Black Cal',0,255,nothing)
 cv2.createTrackbar('Max R','Black Cal',0,255,nothing)
+if resolution == 320:
+    cv2.createTrackbar('Min Area','Black Cal',0,80000,nothing)
+elif resolution == 144:
+    cv2.createTrackbar('Min Area','Black Cal',0,40000,nothing)
+elif resolution == 80:
+    cv2.createTrackbar('Min Area','Black Cal',0,11000,nothing)
 
 cv2.createTrackbar('Min H','Green Cal',0,255,nothing)
 cv2.createTrackbar('Min S','Green Cal',0,255,nothing)
@@ -53,7 +68,12 @@ cv2.createTrackbar('Min V','Green Cal',0,255,nothing)
 cv2.createTrackbar('Max H','Green Cal',0,255,nothing)
 cv2.createTrackbar('Max S','Green Cal',0,255,nothing)
 cv2.createTrackbar('Max V','Green Cal',0,255,nothing)
-cv2.createTrackbar('Min Area','Green Cal',0,80000,nothing)
+if resolution == 320:
+    cv2.createTrackbar('Min Area','Green Cal',0,80000,nothing)
+elif resolution == 144:
+    cv2.createTrackbar('Min Area','Green Cal',0,40000,nothing)
+elif resolution == 80:
+    cv2.createTrackbar('Min Area','Green Cal',0,11000,nothing)
 
 cv2.createTrackbar('Camera Lift', 'Camera',0,1,nothing)
 
@@ -65,8 +85,6 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         # blurred image to show detection status
         blur = cv2.blur(image, (3,3))
-        Bblur = cv2.blur(image, (3,3))
-        Gblur = cv2.blur(image, (3,3))
         Eblur = cv2.blur(image, (3,3))
         
         Min_BB = cv2.getTrackbarPos('Min B','Black Cal')
@@ -75,6 +93,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Max_BB = cv2.getTrackbarPos('Max B','Black Cal')
         Max_BG = cv2.getTrackbarPos('Max G','Black Cal')
         Max_BR = cv2.getTrackbarPos('Max R','Black Cal')
+        Min_BA = cv2.getTrackbarPos('Min Area','Black Cal')
         
         Min_GH = cv2.getTrackbarPos('Min H','Green Cal')
         Min_GS = cv2.getTrackbarPos('Min S','Green Cal')
@@ -105,9 +124,19 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Gmask = cv2.inRange(Gimage,Glower,Gupper)
         
         # Apply vision limiters (Forced Mask over mask that is created by detecting color)
-        res = Bmask[30:90]
-        Bres = Bmask[150:210]
-        Gres = Gmask[150:210]
+        if resolution == 320:
+            res = Bmask[30:90]
+            Bres = Bmask[150:210]
+            Gres = Gmask[150:210]
+        elif resolution == 144:
+            res = Bmask[18:24]
+            Bres = Bmask[90:126]
+            Gres = Gmask[90:126]
+        elif resolution == 80:
+            res = Bmask[10:30]
+            Bres = Bmask[50:70]
+            Gres = Gmask[50:70]
+            
         
         # find contours in the threshold image
         res, Rcontours,Rhierarchy = cv2.findContours(res,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -115,7 +144,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         Bres, BRcontours,BRhierarchy = cv2.findContours(Bres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
         
         # finding contour with maximum area and store it as best_cnt - Black Line (Mask Applied)
-        min_area = 0
+        min_area = Min_BA
         best_cnt = 1
         for cnt in Rcontours:
                 area = cv2.contourArea(cnt)
@@ -154,23 +183,45 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         
         # Mapping dots on image based on Black mask
         if cx != 0 or cy != 0:
-            cv2.circle(Eblur,(cx,cy),5,(0,0,255),-1)
-            cv2.circle(Bblur,(cx,cy),5,(0,0,255),-1)
+            if resolution == 320:
+                cy += 30
+            elif resolution == 144:
+                cy += 18
+            elif resolution == 80:
+                cy += 10    
+            cv2.circle(Eblur,(cx,cy),1,(0,0,255),-1)
         if bx != 0 or by != 0:
-            cv2.circle(Eblur,(bx,by),5,(0,0,255),-1)
-            cv2.circle(Bblur,(bx,by),5,(0,0,255),-1)
+            if resolution == 320:
+                by += 150
+            elif resolution == 144:
+                by += 90
+            elif resolution == 80:
+                by += 50
+            cv2.circle(Eblur,(bx,by),1,(255,0,0),-1)
         # Mapping dots on image based on Green mask
         if gx != 0 or gy != 0:
-            cv2.circle(Eblur,(gx,gy),5,(0,255,255),-1)
-            cv2.circle(Gblur,(gx,gy),5,(0,255,255),-1)
+            if resolution == 320:
+                gy += 150
+            elif resolution == 144:
+                gy += 90
+            elif resolution == 80:
+                gy += 50
+            cv2.circle(Eblur,(gx,gy),1,(0,255,255),-1)
         # Mapping center dot on image
-        cv2.circle(Eblur,(170,160),5,(0,255,0),-1)
-        
-        # images with trackbars
-        cv2.imshow("Black Cal",Bmask)      # Shows black mask without vision limiter with Black Cal Trackbars
-        cv2.imshow("Green Cal",Gmask)     # Shows green mask without vision limiter with Green Cal Trackbars
-        # images without trackbars
-        cv2.imshow("All Dots View",Eblur)   # Shows every dots that has been mapped during this time.
+        if resolution == 320:
+            cv2.circle(Eblur,(180,160),1,(0,255,0),-1)
+        elif resolution == 144:
+            cv2.circle(Eblur,(108,128),1,(0,255,0),-1)
+        elif resolution == 80:
+            cv2.circle(Eblur,(60,64),1,(0,255,0),-1)
+        if resolution == 320 or resolution == 144:
+            cv2.imshow("Black Cal",Bmask)
+            cv2.imshow("Green Cal",Gmask)
+            cv2.imshow("Camera",Eblur)
+        if resolution == 80:
+            cv2.imshow("Bmask",Bmask)      # Shows black mask without vision limiter with Black Cal Trackbars
+            cv2.imshow("Gmask",Gmask)     # Shows green mask without vision limiter with Green Cal Trackbars
+            cv2.imshow("Original",Eblur)   # Shows every dots that has been mapped during this time.
 
         key = cv2.waitKey(1) & 0xFF
  
