@@ -32,26 +32,26 @@ class MainControl(object):
             lasterror = error
             
             Lspeed,Rspeed = mSpeed+pidturn, mSpeed-pidturn
-            if 35 > Lspeed >= 0:
-                Lspeed = -10
-                print("(POS) Lspeed calibrated to.... {}".format(Lspeed))
-            elif 0 > Lspeed > -35:
-                Lspeed -= 10
-                print("(NEG) Lspeed calibrated to.... {}".format(Lspeed))
-            if 35 > Rspeed >= 0:
-                Rspeed = -10
-                print("(POS) Rspeed calibrated to.... {}".format(Rspeed))
-            elif 0 > Rspeed > -35:
-                Rspeed -= 10
-                print("(NEG) Rspeed calibrated to.... {}".format(Rspeed))
+##            if 35 > Lspeed >= 0:
+##                Lspeed = -10
+##                print("(POS) Lspeed calibrated to.... {}".format(Lspeed))
+##            elif 0 > Lspeed > -35:
+##                Lspeed -= 10
+##                print("(NEG) Lspeed calibrated to.... {}".format(Lspeed))
+##            if 35 > Rspeed >= 0:
+##                Rspeed = -10
+##                print("(POS) Rspeed calibrated to.... {}".format(Rspeed))
+##            elif 0 > Rspeed > -35:
+##                Rspeed -= 10
+##                print("(NEG) Rspeed calibrated to.... {}".format(Rspeed))
             if Lspeed > 90:
                 Lspeed = 90
             elif Lspeed < -90:
                 Lspeed = -90
             if Rspeed > 90:
                 Rspeed = 90
-            elif Rspeed < -80:
-                Rspeed = -80
+            elif Rspeed < -90:
+                Rspeed = -90
             curTime = round(time.time())
             timePassed = curTime - startTime
             print("ERROR:{} \t pidturn:{} timestamp:{} \t Lspeed:{} \t Rspeed:{}".format(error,pidturn,curTime,Lspeed,Rspeed))

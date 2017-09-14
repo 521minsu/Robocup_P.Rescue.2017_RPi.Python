@@ -13,10 +13,10 @@
 
 import serial, time, struct
 
-ser = serial.Serial('/dev/ttyUSB0',9600)
+ser = serial.Serial('/dev/ttyACM0',9600)
 
 def value(sensor):
-    while ser.inWaiting()==0:
+    while ser.in_waiting()==0:
         pass
     try:
         rawData  = ser.readline().strip()
@@ -24,14 +24,17 @@ def value(sensor):
             rawrData = rawData.decode()
             senVal = rawrData.split(",")
             dist = int(senVal[0])
-            array = int(senVal[1])
-            
                 
             if sensor == 'distance':
                 return dist
-            elif sensor == 'IRArray':
-                return array
-            pass
     except:
         print("Passed an error")
+        pass
+
+def write(val):
+    try:
+        send = val
+        ser.write(send.encode())
+    except:
+        print("Passed an error while sending val to arduino...")
         pass
