@@ -8,7 +8,7 @@
 # ----------------------------------- #
 #  Author: Minsu Kim                  #
 #  Email : 521minsu@gmail.com         #
-#  Last Update: 22.08.17              #
+#  Last Update: 15.09.17              #
 #######################################
 
 from picamera.array import PiRGBArray
@@ -77,6 +77,9 @@ elif resolution == 80:
 
 cv2.createTrackbar('Camera Lift', 'Camera',0,1,nothing)
 
+cc(cc,'down')
+time.sleep(1)
+cc(cc,'stop')
 
 for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):
         # image feeds to apply masks on
@@ -84,8 +87,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
         image = cv2.flip(original,0)
         Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
         # blurred image to show detection status
-        blur = cv2.blur(image, (3,3))
-        Eblur = cv2.blur(image, (3,3))
+        Eblur =  cv2.blur(image, (3,3))
         
         Min_BB = cv2.getTrackbarPos('Min B','Black Cal')
         Min_BG = cv2.getTrackbarPos('Min G','Black Cal')
@@ -111,17 +113,12 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
             cc(cc,'up')
         
         #For Black, start with 50, when calibrating
-        Blower = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8")
-        Bupper = np.array([Max_BB,Max_BG,Max_BR],dtype="uint8")
-        #For Green, start with Min(20,60,50) Max(80,200,200), when calibrating
-        Glower = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8")
-        Gupper = np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
-##        Glower = np.array([120,10,70],dtype="uint8")
-##        Gupper = np.array([180,175,155],dtype="uint8")
+        Blower,Bupper = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8"),np.array([Max_BB,Max_BG,Max_BR],dtype="uint8")
+        Glower,Gupper = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8"),np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
         
         # Apply mask that is created by detecting colors
-        Bmask = cv2.inRange(image,Blower,Bupper)
-        Gmask = cv2.inRange(Gimage,Glower,Gupper)
+        Bmask,Gmask = cv2.inRange(image,Blower,Bupper),cv2.inRange(Gimage,Glower,Gupper)
+        
         
         # Apply vision limiters (Forced Mask over mask that is created by detecting color)
         if resolution == 320:
@@ -189,7 +186,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 cy += 18
             elif resolution == 80:
                 cy += 10    
-            cv2.circle(Eblur,(cx,cy),1,(0,0,255),-1)
+            cv2.circle(Eblur,(cx,cy),3,(0,0,255),-1)
         if bx != 0 or by != 0:
             if resolution == 320:
                 by += 150
@@ -197,7 +194,7 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 by += 90
             elif resolution == 80:
                 by += 50
-            cv2.circle(Eblur,(bx,by),1,(255,0,0),-1)
+            cv2.circle(Eblur,(bx,by),3,(255,0,0),-1)
         # Mapping dots on image based on Green mask
         if gx != 0 or gy != 0:
             if resolution == 320:
@@ -206,19 +203,19 @@ for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=
                 gy += 90
             elif resolution == 80:
                 gy += 50
-            cv2.circle(Eblur,(gx,gy),1,(0,255,255),-1)
+            cv2.circle(Eblur,(gx,gy),3,(0,255,255),-1)
         # Mapping center dot on image
         if resolution == 320:
-            cv2.circle(Eblur,(180,160),1,(0,255,0),-1)
+            cv2.circle(Eblur,(180,160),3,(0,255,0),-1)
         elif resolution == 144:
-            cv2.circle(Eblur,(108,128),1,(0,255,0),-1)
+            cv2.circle(Eblur,(108,128),3,(0,255,0),-1)
         elif resolution == 80:
-            cv2.circle(Eblur,(60,64),1,(0,255,0),-1)
-        if resolution == 320 or resolution == 144:
+            cv2.circle(Eblur,(60,64),3,(0,255,0),-1)
+        if resolution != 80:
             cv2.imshow("Black Cal",Bmask)
             cv2.imshow("Green Cal",Gmask)
             cv2.imshow("Camera",Eblur)
-        if resolution == 80:
+        else:
             cv2.imshow("Bmask",Bmask)      # Shows black mask without vision limiter with Black Cal Trackbars
             cv2.imshow("Gmask",Gmask)     # Shows green mask without vision limiter with Green Cal Trackbars
             cv2.imshow("Original",Eblur)   # Shows every dots that has been mapped during this time.

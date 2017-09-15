@@ -7,7 +7,7 @@
 # ---------------------------------- #
 #  Author: Minsu Kim                 #
 #  Email : 521minsu@gmail.com        #
-#  Last Update: 10.09.17             #
+#  Last Update: 15.09.17             #
 ######################################
 
 ##############################################
@@ -23,7 +23,6 @@ import cv2
 import numpy as np
 
 #Loop and program related modules
-from Loop import MainControl as Mainloop
 import SensorReading as SR
 
 first = False
@@ -33,8 +32,6 @@ SearchPlatform = False
 Victimloc = 0
 
 import dc_motors
-dc = dc_motors.Motor.drivingcontrol
-lc = dc_motors.Motor.liftcontrol
 cc = dc_motors.Motor.cameracontrol
 
 bx,bx1,bx2,by,gx,gy,rx,ry = 0,0,0,0,0,0,0,0
@@ -49,10 +46,6 @@ camera.framerate = 50
 camera.hflip = True
 
 cc(cc,'down')
-dc(dc,0,0)
-lc(lc,'idle','release')
-time.sleep(1)
-cc(cc,'stop')
 
 rawCapture = PiRGBArray(camera, size=(128, 80))
 
@@ -61,13 +54,10 @@ time.sleep(1)
 try:
     for frame in camera.capture_continuous(rawCapture, format="bgr", use_video_port=True):      
         #Make sure You are putting calibrated values in
-        Min_BB,Min_BG,Min_BR,Max_BB,Max_BG,Max_BR = 0,0,0,255,0,255
-        
-        Min_GH,Min_GS,Min_GV,Max_GH,Max_GS,Max_GV = 40,20,40,80,170,180       #21,63,54        
-        
+        Min_BB,Min_BG,Min_BR,Max_BB,Max_BG,Max_BR = 0,0,0,255,50,255
+        Min_GH,Min_GS,Min_GV,Max_GH,Max_GS,Max_GV = 20,20,50,80,162,171       #21,63,54        
         Min_VB,Min_VG,Min_VR,Max_VB,Max_VG,Max_VR = 0,0,0,255,225,255
-        
-        Min_OH,Min_OS,Min_OV,Max_OH,Max_OS,Max_OV = 150,110,80,185,195,195    #120,60,60
+        Min_OH,Min_OS,Min_OV,Max_OH,Max_OS,Max_OV = 0,150,110,187,185,255    #120,60,60
         
         
         # image from the Picam
@@ -79,17 +69,11 @@ try:
             #   Finding contours for line tracing   #
             #########################################
             # images from the Picam with filters and effects
-            Gimage = cv2.cvtColor(image,cv2.COLOR_BGR2HSV)
-            blur = cv2.blur(image, (3,3))
-            
-            #Please Run Calibration.py first, and bring back the values according to the current situation
+            Gimage,blur = cv2.cvtColor(image,cv2.COLOR_BGR2HSV),cv2.blur(image, (3,3))
             Blower,Bupper = np.array([Min_BB,Min_BG,Min_BR],dtype="uint8"),np.array([Max_BB,Max_BG,Max_BR],dtype="uint8")
-            #Please Run Calibration.py first, and bring back the values according to the current situation
             Glower,Gupper = np.array([Min_GH,Min_GS,Min_GV],dtype="uint8"),np.array([Max_GH,Max_GS,Max_GV],dtype="uint8")
             
-            # Pure Masked image without any limits on its vision
             Gmask,Bmask = cv2.inRange(Gimage,Glower,Gupper),cv2.inRange(image,Blower,Bupper)
-
             Bres,BBres,Gres = Bmask[10:30],Bmask[50:70],Gmask[50:70]
             
             Bres, Rcontours,Rhierarchy = cv2.findContours(Bres,cv2.RETR_LIST,cv2.CHAIN_APPROX_SIMPLE)
@@ -98,7 +82,7 @@ try:
                
             # finding contour with maximum area and store it as best_cnt - Black Area
             # min_area = 1000
-            Bmin_area = 100    
+            Bmin_area = 50    
             Bbest_cnt = 1
             for Bcnt in Rcontours:
                     Barea = cv2.contourArea(Bcnt)
@@ -112,7 +96,7 @@ try:
             
             # finding contour with maximum area and store it as best_cnt - Black Area
             # min_area = 1000
-            BBmin_area = 200    
+            BBmin_area = 50    
             BBbest_cnt = 1
             for BBcnt in BRcontours:
                     BBarea = cv2.contourArea(BBcnt)
@@ -147,7 +131,7 @@ try:
             if bbx != 0:
                 bby += 50
                 cv2.circle(blur,(bbx,bby),5,(0,0,255),-1)      # Red Dot
-            cv2.circle(blur,(170,160),5,(0,255,0),-1)    # Green Dot
+            cv2.circle(blur,(70,64),5,(0,255,0),-1)    # Green Dot
             lineerror,turnerror = 1000,1000
             
         #============== Search Victim ===================
@@ -155,11 +139,7 @@ try:
          
             if gx_low < gx < gx_high and bx == 0:
                 print("Rescue starting")
-                dc(dc,80,80)
-                time.sleep(0.4)
-                dc(dc,0,0)
                 cc(cc,'up')
-                lc(lc,'lift','idle')
                 time.sleep(1)
                 
                 Rescue_alert = 1
@@ -172,8 +152,11 @@ try:
                     greenturn = 1
                 elif turnerror < 0:
                     greenturn = 0
+            black=0
+            if bbx != 0:
+                black = 1
                                 
-            toArduino = "G" + str(greenturn) + "R" + str(Rescue_alert) + "V" + str(0) + "O" + str(0) + "*"
+            toArduino = "G" + str(greenturn) + "R" + str(Rescue_alert) + "V0" + "O0" + "B" + str(black) + "*"
             SR.write(toArduino)
             print("printed {} to Arduino... Main.py".format(toArduino))
             
@@ -237,17 +220,13 @@ try:
             cv2.imshow("Omask",Omask)
             cv2.imshow("Ores",Ores)
             cv2.imshow("Vmask",VmaskInv)
-            
+            vxa,oxa = 0,0
             if vx != 0:
                 vxa = 1
-            else:
-                vxa = 0
             if ox != 0:
                 oxa = 1
-            else:
-                oxa = 0
                 
-            toArduino = "G" + str(0) + "R" + str(1) + "V" + str(vxa) + "O" + str(oxa) + "*"
+            toArduino = "G2" + "R1" + "V" + str(vxa) + "O" + str(oxa) + "B0" + "*"
             SR.write(toArduino)
             print("Sending {} to Arduino... rescue \t debug:{}".format(toArduino,debug))
             

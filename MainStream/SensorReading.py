@@ -8,28 +8,12 @@
 # ---------------------------------- #
 #  Author: Minsu Kim                 #
 #  Email : 521minsu@gmail.com        #
-#  Last Update: 23.08.17             #
+#  Last Update: 15.09.17             #
 ######################################
 
 import serial, time, struct
 
 ser = serial.Serial('/dev/ttyACM0',9600)
-
-def value(sensor):
-    while ser.in_waiting()==0:
-        pass
-    try:
-        rawData  = ser.readline().strip()
-        if rawData != b'':
-            rawrData = rawData.decode()
-            senVal = rawrData.split(",")
-            dist = int(senVal[0])
-                
-            if sensor == 'distance':
-                return dist
-    except:
-        print("Passed an error")
-        pass
 
 def write(val):
     try:
