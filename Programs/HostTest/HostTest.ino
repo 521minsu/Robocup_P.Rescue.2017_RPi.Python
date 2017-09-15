@@ -19,13 +19,14 @@ int binarray = 0, preval = 0;
 int Lspeed,Rspeed;
 //---------------------------------------------------------------------------------------------------------------------------------//
 String inputString = "";         // a string to hold incoming data
-int Gcoord,Rcoord,Vcoord,Ocoord;
-String greenTurn="3",rescue,vx,ox;
+int Gcoord,Rcoord,Vcoord,Ocoord,Bcoord;
+String greenTurn="3",lastGreen,rescue,vx,ox,black;
 boolean stringComplete = false;  // whether the string is complete
+boolean finished = false;
 //---------------------------------------------------------------------------------------------------------------------------------//
 boolean DebugMode = false;
 //---------------------------------------------------------------------------------------------------------------------------------//
-int WTDone=0,WTLimit=0;
+int WTDone=0,WTLimit=1;
 //---------------------------------------------------------------------------------------------------------------------------------//
 
 //=============================================================== SETUP ============================================================================//
@@ -34,19 +35,23 @@ void setup() {
   pinMode(TRIG_PIN,OUTPUT); pinMode(ECHO_PIN,INPUT);
   pinMode(s1,INPUT); pinMode(s2,INPUT); pinMode(s3,INPUT); pinMode(s4,INPUT); pinMode(s5,INPUT); pinMode(s6,INPUT); pinMode(s7,INPUT);
   inputString.reserve(200); inputString = "";
+  lift(0,0);drive(0,0);
 }
 
 void loop() {
-  IR_sensor();
+//  if(finished == false){
+//    IR_sensor();
+//    UltraSonic();
+//    RPi_Emergency_Control();
+//      
+//    if(greenTurn!="3"){
+//      MoveControl();
+//      WaterTower();
+//      RPiMovements();
+//    }
+//  } else drive(0,0);
   UltraSonic();
-  //Serial.println(cm);
-  RPi_Emergency_Control();
-    
-  if(greenTurn!="3"){
-    MoveControl();
-    WaterTower();
-    RPiMovements();
-  }
+  Serial.println(cm);
 }
 
 void IR_sensor() {
@@ -57,17 +62,9 @@ void IR_sensor() {
   if (analogRead(s5) < 400) sVal[4] = 0; else sVal[4] = 1;
   if (analogRead(s6) < 400) sVal[5] = 0; else sVal[5] = 1;
   if (analogRead(s7) < 400) sVal[6] = 0; else sVal[6] = 1; 
-//---------------------------------------------------------------------------------------------------------------
+//-----------------------------------------------------------------------------------------------------------------------
   binarray = (sVal[6] * 64) + (sVal[5] * 32) + (sVal[4] * 16) + (sVal[3] * 8) + (sVal[2] * 4) + (sVal[1] * 2) + sVal[0];
-//---------------------------------------------------------------------------------------------------------------
-//  Serial.print("array:");Serial.print(binarray);Serial.print("\t");
-//  Serial.print("S1:");Serial.print(analogRead(s1));Serial.print("\t");
-//  Serial.print("S2:");Serial.print(analogRead(s2));Serial.print("\t");
-//  Serial.print("S3:");Serial.print(analogRead(s3));Serial.print("\t");
-//  Serial.print("S4:");Serial.print(analogRead(s4));Serial.print("\t");
-//  Serial.print("S5:");Serial.print(analogRead(s5));Serial.print("\t");
-//  Serial.print("S6:");Serial.print(analogRead(s6));Serial.print("\t");
-//  Serial.print("S7:");Serial.println(analogRead(s7));
+//-----------------------------------------------------------------------------------------------------------------------
 }
 
 void UltraSonic() {
@@ -77,46 +74,52 @@ void UltraSonic() {
 }
 
 void MoveControl() {
-  int SSpeed = 200,Straight = 180;
+  int SSpeed = 170,Straight = SSpeed - 10;
   IR_sensor();
   
   switch (binarray) {   //1,2,4,8,16,32,64//
     //---------------------------- Turn Left ------------------------------------------------------------------------------------------------//
     case 1  : drive(-SSpeed - 50, SSpeed + 50);       break;   //(1,0,0,0,0,0,0);   //Left
-    case 2  : drive(-SSpeed, SSpeed);                 break;   //(0,1,0,0,0,0,0);   //Left
+    case 2  : drive(0, SSpeed);                       break;   //(0,1,0,0,0,0,0);   //Left
     case 3  : drive(-250, 250);                       break;   //(1,1,0,0,0,0,0);   //Left
-    case 4  : drive(-40, SSpeed);                     break;   //(0,0,1,0,0,0,0);   //Left
-    case 6  : drive(-80, SSpeed);                     break;   //(0,1,1,0,0,0,0);   //Left
-    case 12 : drive(SSpeed - 50, SSpeed);             break;   //(0,0,1,1,0,0,0);   //Left
+    case 4  : drive(-30, SSpeed);                     break;   //(0,0,1,0,0,0,0);   //Left
+    case 6  : drive(-70, SSpeed);                     break;   //(0,1,1,0,0,0,0);   //Left
+    case 12 : drive(SSpeed - 40, SSpeed);             break;   //(0,0,1,1,0,0,0);   //Left
     case 13 : drive(SSpeed - 50, SSpeed);             break;   //(1,0,1,1,0,0,0);   //Left
     case 25 : drive(0, SSpeed);                       break;   //(1,0,0,1,1,0,0);   //Left
     case 35 : drive(-SSpeed, SSpeed);                 break;   //(1,1,0,0,0,1,0);   //Left
-  //case 63 : drive(SSpeed - 50, SSpeed);             break;   //(1,1,1,1,1,1,0);   //Left
+  //case 63 : drive(SSpeed - 50, SSpeed);             break;   //(1,1,1,1,1,1,0);   //Left //Was annotated
     case 67 : drive(-250, 250);                       break;   //(1,1,0,0,0,0,1);   //Left
-  //case 68 : drive(-SSpeed, SSpeed);                 break;   //(0,0,1,0,0,0,1);   //Left
-  //case 70 : drive(0, SSpeed);                       break;   //(0,1,1,0,0,0,1);   //Left
+    case 68 : drive(-SSpeed, SSpeed);                 break;   //(0,0,1,0,0,0,1);   //Left //Was annotated
+    case 70 : drive(0, SSpeed);                       break;   //(0,1,1,0,0,0,1);   //Left //Was annotated
     //----------------------------- Turn Right ----------------------------------------------------------------------------------------------//
-    case 16 : drive(SSpeed, -40);                     break;   //(0,0,0,0,1,0,0);   //Right
+    case 16 : drive(SSpeed, -30);                     break;   //(0,0,0,0,1,0,0);   //Right
     case 17 : drive(SSpeed, 0);                       break;   //(1,0,0,0,1,0,0);   //Right
-    case 24 : drive(SSpeed, SSpeed - 50);             break;   //(0,0,0,1,1,0,0);   //Right
-    case 32 : drive(SSpeed, -SSpeed);                 break;   //(0,0,0,0,0,1,0);   //Right
-  //case 34 : drive(SSpeed, 0);                       break;   //(0,1,0,0,0,1,0);   //Right
-    case 48 : drive(SSpeed, -80);                     break;   //(0,0,0,0,1,1,0);   //Right
+    case 24 : drive(SSpeed, SSpeed - 40);             break;   //(0,0,0,1,1,0,0);   //Right
+    case 32 : drive(SSpeed, 0);                       break;   //(0,0,0,0,0,1,0);   //Right
+    case 34 : drive(SSpeed, 0);                       break;   //(0,1,0,0,0,1,0);   //Right //Was annotated
+    case 48 : drive(SSpeed, -70);                     break;   //(0,0,0,0,1,1,0);   //Right
     case 49 : drive(SSpeed, 0);                       break;   //(1,0,0,0,1,1,0);   //Right
-  //case 62 : drive(SSpeed, 0);                       break;   //(0,1,1,1,1,0,0);   //Right
+    case 62 : drive(SSpeed, 0);                       break;   //(0,1,1,1,1,0,0);   //Right //Was annotated
     case 64 : drive(SSpeed + 50, -SSpeed - 50);       break;   //(0,0,0,0,0,0,1);   //Right
     case 96 : drive(250, -250);                       break;   //(0,0,0,0,0,1,1);   //Right
     case 97 : drive(250, -250);                       break;   //(1,0,0,0,0,1,1);   //Right
-  //case 107: drive(SSpeed, 0);                       break;   //(1,1,0,1,0,1,1);   //Right
-  //case 126: drive(SSpeed, 0);                       break;   //(0,1,1,1,1,1,1);   //Right
+    case 107: drive(SSpeed, 0);                       break;   //(1,1,0,1,0,1,1);   //Right //Was annotated
+    case 126: drive(SSpeed, 0);                       break;   //(0,1,1,1,1,1,1);   //Right //Was annotated
     //---------------------------- STRAIGHT -------------------------------------------------------------------------------------------------//
     case 8  : drive(Straight, Straight);              break;   //(0,0,0,1,0,0,0);   //Straight
     case 28 : drive(Straight, Straight);              break;   //(0,0,1,1,1,0,0);   //Straight
+    case 9  : drive(Straight, Straight);              break;   //(1,0,0,1,0,0,0);   //Straight
+    case 72 : drive(Straight, Straight);              break;   //(0,0,0,1,0,0,1);   //Straight
+    case 80 : drive(Straight, Straight);              break;   //(0,0,0,0,1,0,1);   //Straight
+    case 100: drive(Straight, Straight);              break;   //(1,0,0,1,0,0,0);   //Straight
+    case 65 : drive(Straight, Straight);              break;   //(0,0,0,0,1,0,1);   //Straight
     //----------------------------- 90ºleft ------------------------------------------------------------------------------------------------//
     case 7  : drive(-250, 250);                       break;   //(1,1,1,0,0,0,0);   //90ºleft
     case 14 : drive(0, SSpeed);                       break;   //(0,1,1,1,0,0,0);   //90ºleft
     case 15 : drive(-250, 250);                       break;   //(1,1,1,1,0,0,0);   //90ºleft
     case 30 : drive(0, SSpeed);                       break;   //(0,1,1,1,1,0,0);   //90ºleft
+    case 31 : drive(-250, 250);                       break;   //(1,1,1,1,1,0,0);   //90ºleft
     case 44 : drive(0, SSpeed);                       break;   //(0,1,1,1,0,0,0);   //90ºleft
     //---------------------------- 90ºright ------------------------------------------------------------------------------------------------//
     case 56 : drive(SSpeed, 0);                       break;   //(0,0,0,1,1,1,0);   //90ºright
@@ -131,46 +134,47 @@ void MoveControl() {
 }
 
 void PreVal() {
-  int SSpeed = 200,Straight = 180;
+  int SSpeed = 170,Straight = SSpeed - 10;
   
   switch (preval) {   //1,2,4,8,16,32,64//
-    //---------------------------- Turn Left ------------------------------------------------------------------------------------------------//
     case 1  : drive(-SSpeed - 50, SSpeed + 50);       break;   //(1,0,0,0,0,0,0);   //Left
-    case 2  : drive(-SSpeed, SSpeed);                 break;   //(0,1,0,0,0,0,0);   //Left
+    case 2  : drive(0, SSpeed);                       break;   //(0,1,0,0,0,0,0);   //Left
     case 3  : drive(-250, 250);                       break;   //(1,1,0,0,0,0,0);   //Left
-    case 4  : drive(-40, SSpeed);                     break;   //(0,0,1,0,0,0,0);   //Left
-    case 6  : drive(-80, SSpeed);                     break;   //(0,1,1,0,0,0,0);   //Left
-    case 12 : drive(SSpeed - 50, SSpeed);             break;   //(0,0,1,1,0,0,0);   //Left
+    case 4  : drive(-30, SSpeed);                     break;   //(0,0,1,0,0,0,0);   //Left
+    case 6  : drive(-70, SSpeed);                     break;   //(0,1,1,0,0,0,0);   //Left
+    case 12 : drive(SSpeed - 40, SSpeed);             break;   //(0,0,1,1,0,0,0);   //Left
     case 13 : drive(SSpeed - 50, SSpeed);             break;   //(1,0,1,1,0,0,0);   //Left
     case 25 : drive(0, SSpeed);                       break;   //(1,0,0,1,1,0,0);   //Left
     case 35 : drive(-SSpeed, SSpeed);                 break;   //(1,1,0,0,0,1,0);   //Left
-    case 63 : drive(SSpeed - 50, SSpeed);             break;   //(1,1,1,1,1,1,0);   //Left
-    case 65 : drive(-250, 250);                       break;   //(1,0,0,0,0,0,1);   //Left
+    case 63 : drive(SSpeed - 50, SSpeed);             break;   //(1,1,1,1,1,1,0);   //Left //Was annotated
     case 67 : drive(-250, 250);                       break;   //(1,1,0,0,0,0,1);   //Left
-    case 68 : drive(-SSpeed, SSpeed);                 break;   //(0,0,1,0,0,0,1);   //Left
-    case 70 : drive(0, SSpeed);                       break;   //(0,1,1,0,0,0,1);   //Left
+    case 68 : drive(-SSpeed, SSpeed);                 break;   //(0,0,1,0,0,0,1);   //Left //Was annotated
+    case 70 : drive(0, SSpeed);                       break;   //(0,1,1,0,0,0,1);   //Left //Was annotated
     //----------------------------- Turn Right ----------------------------------------------------------------------------------------------//
-    case 16 : drive(SSpeed, -40);                     break;   //(0,0,0,0,1,0,0);   //Right
+    case 16 : drive(SSpeed, -30);                     break;   //(0,0,0,0,1,0,0);   //Right
     case 17 : drive(SSpeed, 0);                       break;   //(1,0,0,0,1,0,0);   //Right
-    case 24 : drive(SSpeed, SSpeed - 50);             break;   //(0,0,0,1,1,0,0);   //Right
-    case 32 : drive(SSpeed, -SSpeed);                 break;   //(0,0,0,0,0,1,0);   //Right
-    case 34 : drive(SSpeed, 0);                       break;   //(0,1,0,0,0,1,0);   //Right
-    case 48 : drive(SSpeed, -80);                     break;   //(0,0,0,0,1,1,0);   //Right
+    case 24 : drive(SSpeed, SSpeed - 40);             break;   //(0,0,0,1,1,0,0);   //Right
+    case 32 : drive(SSpeed, 0);                       break;   //(0,0,0,0,0,1,0);   //Right
+    case 34 : drive(SSpeed, 0);                       break;   //(0,1,0,0,0,1,0);   //Right //Was annotated
+    case 48 : drive(SSpeed, -70);                     break;   //(0,0,0,0,1,1,0);   //Right
     case 49 : drive(SSpeed, 0);                       break;   //(1,0,0,0,1,1,0);   //Right
-    case 62 : drive(SSpeed, 0);                       break;   //(0,1,1,1,1,0,0);   //Right
+    case 62 : drive(SSpeed, 0);                       break;   //(0,1,1,1,1,0,0);   //Right //Was annotated
     case 64 : drive(SSpeed + 50, -SSpeed - 50);       break;   //(0,0,0,0,0,0,1);   //Right
     case 96 : drive(250, -250);                       break;   //(0,0,0,0,0,1,1);   //Right
     case 97 : drive(250, -250);                       break;   //(1,0,0,0,0,1,1);   //Right
-    case 107: drive(SSpeed, 0);                       break;   //(1,1,0,1,0,1,1);   //Right
-    case 126: drive(SSpeed, 0);                       break;   //(0,1,1,1,1,1,1);   //Right
+    case 107: drive(SSpeed, 0);                       break;   //(1,1,0,1,0,1,1);   //Right //Was annotated
+    case 126: drive(SSpeed, 0);                       break;   //(0,1,1,1,1,1,1);   //Right //Was annotated
     //---------------------------- STRAIGHT -------------------------------------------------------------------------------------------------//
     case 8  : drive(Straight, Straight);              break;   //(0,0,0,1,0,0,0);   //Straight
-    case 28 : drive(Straight, Straight);              break;   //(0,0,1,1,1,0,0);   //Straight
+    case 9  : drive(Straight, Straight);              break;   //(1,0,0,1,0,0,0);   //Straight
+    case 72 : drive(Straight, Straight);              break;   //(0,0,0,1,0,0,1);   //Straight
+    case 80 : drive(Straight, Straight);              break;   //(0,0,0,0,1,0,1);   //Straight
     //----------------------------- 90ºleft ------------------------------------------------------------------------------------------------//
     case 7  : drive(-250, 250);                       break;   //(1,1,1,0,0,0,0);   //90ºleft
     case 14 : drive(0, SSpeed);                       break;   //(0,1,1,1,0,0,0);   //90ºleft
     case 15 : drive(-250, 250);                       break;   //(1,1,1,1,0,0,0);   //90ºleft
     case 30 : drive(0, SSpeed);                       break;   //(0,1,1,1,1,0,0);   //90ºleft
+    case 31 : drive(-250, 250);                       break;   //(1,1,1,1,1,0,0);   //90ºleft
     case 44 : drive(0, SSpeed);                       break;   //(0,1,1,1,0,0,0);   //90ºleft
     //---------------------------- 90ºright ------------------------------------------------------------------------------------------------//
     case 56 : drive(SSpeed, 0);                       break;   //(0,0,0,1,1,1,0);   //90ºright
@@ -181,6 +185,7 @@ void PreVal() {
 }
 
 void RPi_Emergency_Control() { 
+  serialEvent();
   if (stringComplete) {
     String G = "G";
     if(inputString.startsWith(G)){
@@ -188,22 +193,26 @@ void RPi_Emergency_Control() {
       Rcoord     = inputString.indexOf('R');
       Vcoord     = inputString.indexOf('V');
       Ocoord     = inputString.indexOf('O');
+      Bcoord     = inputString.indexOf('B');
       greenTurn  = inputString.substring(Gcoord+1,Gcoord+2); 
       rescue     = inputString.substring(Rcoord+1,Rcoord+2);
       vx         = inputString.substring(Vcoord+1,Vcoord+2); 
       ox         = inputString.substring(Ocoord+1,Ocoord+2);
-      Serial.print("Raw:");Serial.println(inputString);
-      Gcoord=0;Rcoord=0;Vcoord=0;Ocoord=0;
+      black      = inputString.substring(Bcoord+1,Bcoord+2);
     }
-    //Serial.print("AAAAAAAAAAAAAAAAAAAAAAAAA:");Serial.println(inputString);
+    Serial.print("Raw:");Serial.println(inputString);
+    Gcoord=0;Rcoord=0;Vcoord=0;Ocoord=0;Bcoord=0;
     inputString = "";
     stringComplete = false;
-  }
+  } 
   Serial.print("From EC...");Serial.print("\t");
+  Serial.print("IR:");Serial.print(binarray);Serial.print("\t");
+  Serial.print("Dist:");Serial.print(cm);Serial.print("\t");
   Serial.print("green:");Serial.print(greenTurn);Serial.print("\t");
   Serial.print("res:");Serial.print(rescue);Serial.print("\t");
   Serial.print("ox:");Serial.print(ox);Serial.print("\t");
-  Serial.print("vx:");Serial.println(vx);
+  Serial.print("vx:");Serial.print(vx);Serial.print("\t");
+  Serial.print("black:");Serial.println(black);
 }
 
 void serialEvent() {
@@ -217,68 +226,86 @@ void serialEvent() {
   }
 } 
 
+void RPiMovements() {
+  if(greenTurn != "2"){
+    drive(0,0);      delay(100); 
+    IR_sensor(); 
+    while(sVal[1] != 1 && sVal[5] != 1) {
+      drive(140,140);
+      IR_sensor();
+    } drive(0,0);delay(500); 
+    if(greenTurn == "0"){       //Turn Left
+      drive(-5,170);delay(1800);
+    } else {                    //Turn Right
+      drive(170,0);delay(1300);
+    } drive(0,0);delay(100); 
+      drive(0,0);
+    while (Serial.available()) Serial.println(Serial.read()); 
+    greenTurn="2";
+  }
+  if(rescue == "1") startRescue();
+}
+
 void WaterTower() {
-  int less = 30, more = 140, dly = 700;
-  UltraSonic();
-  if(cm < 30 && WTDone < WTLimit){
+int less = -30, more = 200;
+if(cm < 30 && WTDone < WTLimit){
+  Serial.println("Start");
+  drive(0, 0);      //Left is 12 because of the speed correction
+  delay(1000);        //Generalize the speed
 //-----------------------------------------------------------------
-    drive(12, 0);      //Left is 12 because of the speed correction
-    delay(1000);        //Generalize the speed
-//-----------------------------------------------------------------
-    drive(more, less); //Right
-    delay(1350);
-    //drive(65,more); //수평잡기
-    drive(less, more); //수평잡기
-    delay(1200);
-    drive(90, 90); //수평잡기
-    delay(1300);
-    drive(less, more); //Left
-    delay(1350);
-    drive(more, more);
-    delay(50);
-    drive(more, less); //Right - Find Line
-    delay(450);
+  drive(more, less); //Right
+  delay(1000);
+  drive(more,more);
+  delay(300);
+  IR_sensor();
+  while(sVal[3] != 1){
+    drive(-less+15, more); //Left
+    IR_sensor();
+  } drive(more,less);
+    delay(500);
+  Serial.println("END");
 //------------------------------------------------------------------
     WTDone++;
 //------------------------------------------------------------------
   } IR_sensor();
 }
 
-void RPiMovements() {
-  if(greenTurn == "0"){
-    drive(-140,140); delay(500);
-  } else if(greenTurn == "1"){
-    drive(140,-140); delay(500);
-  }
-  if(rescue == "1") startRescue();
-}
-
 void startRescue() {
-  int runningres = 1,searchPlatform = 0,victimloc = 0;
-  while (runningres){
-    RPi_Emergency_Control();
-    if(vx != "0" && searchPlatform == 0) {
+  int searchPlatform = 0,mSpeed = 150;
+  while(true){
+    RPi_Emergency_Control();UltraSonic();
+    if(vx == "1" && searchPlatform == 0) {
+      drive(mSpeed,-mSpeed);
+      delay(300);
+      UltraSonic();
       while(cm > 6){
-        drive(140,140);
+        drive(mSpeed,mSpeed);
         UltraSonic();
-      } drive(0,0);
-      lift(0,250);      delay(1500);
+      }
+      drive(0,0);
+      lift(250,0);      delay(1500);
       lift(250,250);    delay(1500);
-      drive(-100,-100); delay(500);
+      drive(-mSpeed,-mSpeed); delay(500);
       drive(0,0);
+      while (Serial.available()) Serial.println(Serial.read());
       searchPlatform = 1;
-    }
-    if(ox != "0" && searchPlatform == 1){
+    } RPi_Emergency_Control();UltraSonic();
+    if(ox == "1" && searchPlatform == 1){
       while (cm > 6){
-        drive(100,100);
+        drive(mSpeed,mSpeed);
         UltraSonic();
-      } drive(0,0);
-      lift(0,250);      delay(1000);
-      lift(0,0);        delay(1000);
-      drive(-100,-100); delay(500);
+      }
       drive(0,0);
-    }
-    drive(-100,100);
+      lift(0,-250);      delay(1000);
+      lift(-250,0);      delay(1000);
+      drive(-mSpeed,-mSpeed); delay(500);
+      drive(0,0);
+      finished = true;
+      break;
+      while (Serial.available()) Serial.println(Serial.read());
+    } RPi_Emergency_Control();
+    if(searchPlatform == 0) drive(-mSpeed,mSpeed);
+    else drive(mSpeed,-mSpeed);
   }
 }
 
@@ -295,13 +322,14 @@ void drive(int LeftS, int RightS) {
     RM_Dir = BACKWARD;
     RightS = abs(RightS);
   } else RM_Dir = FORWARD;
-
-  motor(3,  LM_Dir, LeftS );// ADD speed correction as robot never moves straight when the speed is same
+  
+  //if (LeftS != 0) motor(3,  LM_Dir, LeftS-10 );
+  motor(3,  LM_Dir, LeftS );
   motor(4, RM_Dir, RightS );
 
 }
 
-void lift(int Lift, int Catch) {
+void lift(int Catch, int Lift) {
   int LIFT_Dir = BACKWARD;
   int CATCH_Dir = BACKWARD;
 
@@ -314,8 +342,8 @@ void lift(int Lift, int Catch) {
     Catch = abs(Catch);
   } else CATCH_Dir = BACKWARD;
 
-  motor(1,  LIFT_Dir, Lift);// ADD speed correction as robot never moves straight when the speed is same
-  motor(2, CATCH_Dir, Catch );
+  motor(2,  LIFT_Dir, Lift);// ADD speed correction as robot never moves straight when the speed is same
+  motor(1, CATCH_Dir, Catch );
 }
 
 void motor(int nMotor, int command, int speed)
