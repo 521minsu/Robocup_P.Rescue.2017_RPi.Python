@@ -9,4 +9,3 @@ This repository requires following libraries and modules on RPi3 Model B: <br>
 &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;*   pyserial module (sudo pip3 install pyserial --upgrade) <br>
 <br>
 <br>
-<b> ** I DO NOT give permission to use this program/repository in any form, without my permission. ** </b>
