@@ -5,4 +5,3 @@ This branch contains a lot of open-sourced libraries that are free to use by eve
 <br>
 All the simple programs inside the 'Programs' directory are mine, and are meant to be using few libraries inside the 'Libraries' folder. <br>
 <br>
-<b> ** I DO NOT give permission to use this program/repository in any form. ** </b>
